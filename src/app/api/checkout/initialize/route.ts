@@ -1,0 +1,133 @@
+import { NextResponse } from "next/server";
+import { randomUUID } from "node:crypto";
+import { ObjectId } from "mongodb";
+import { checkoutInitSchema } from "@/lib/validation";
+import { getDb } from "@/lib/mongodb";
+import { toProduct, type ProductDoc } from "@/lib/products";
+import { initializeTransaction } from "@/lib/paystack";
+import { rateLimit, getClientIp } from "@/lib/rateLimit";
+
+export async function POST(request: Request) {
+  const ip = getClientIp(request);
+  const { allowed } = rateLimit(`checkout:${ip}`, { limit: 10, windowMs: 10 * 60 * 1000 });
+  if (!allowed) {
+    return NextResponse.json(
+      { error: "Too many attempts. Please wait a few minutes and try again." },
+      { status: 429 }
+    );
+  }
+
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+
+  const parsed = checkoutInitSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.error.issues[0]?.message ?? "Invalid input" },
+      { status: 400 }
+    );
+  }
+
+  const { customerName, email, phone, address, city, orderType, items, depositOnly } =
+    parsed.data;
+
+  try {
+    const db = await getDb();
+
+    // Never trust prices/stock from the client - look everything up fresh.
+    const productIds = items.map((i) => new ObjectId(i.productId));
+    const productDocs = await db
+      .collection<ProductDoc>("products")
+      .find({ _id: { $in: productIds }, active: true })
+      .toArray();
+    const products = productDocs.map(toProduct);
+
+    if (products.length !== items.length) {
+      return NextResponse.json(
+        { error: "One or more items in your cart are no longer available." },
+        { status: 400 }
+      );
+    }
+
+    // Guard against mixing retail and wholesale items in one checkout -
+    // they have different fulfillment/lead-time flows.
+    const mismatched = products.find((p) => p.product_type !== orderType);
+    if (mismatched) {
+      return NextResponse.json(
+        {
+          error:
+            "Retail and pre-order wholesale items can't be checked out together. Please check out separately.",
+        },
+        { status: 400 }
+      );
+    }
+
+    let total = 0;
+    const orderItems = items.map((item) => {
+      const product = products.find((p) => p.id === item.productId)!;
+
+      if (orderType === "retail" && product.stock < item.quantity) {
+        throw new Error(`Not enough stock for ${product.name}`);
+      }
+
+      const lineTotal = product.price * item.quantity;
+      total += lineTotal;
+
+      return {
+        product_id: product.id,
+        product_name: product.name,
+        quantity: item.quantity,
+        unit_price: product.price,
+      };
+    });
+
+    // For wholesale, a deposit-only checkout charges a percentage now;
+    // the remainder is collected before delivery (handled manually/admin side).
+    let amountDue = total;
+    if (orderType === "wholesale" && depositOnly) {
+      const depositPercents = products
+        .map((p) => p.deposit_percent ?? 100)
+        .filter((n) => !Number.isNaN(n));
+      const depositPercent = depositPercents.length
+        ? Math.max(...depositPercents)
+        : 100;
+      amountDue = Math.round((total * depositPercent) / 100);
+    }
+
+    const reference = `biggystone_${randomUUID()}`;
+
+    const insertResult = await db.collection("orders").insertOne({
+      customer_name: customerName,
+      email,
+      phone,
+      address,
+      city,
+      order_type: orderType,
+      status: "pending",
+      total: amountDue,
+      deposit_only: orderType === "wholesale" ? depositOnly ?? false : false,
+      paystack_reference: reference,
+      created_at: new Date(),
+      order_items: orderItems,
+    });
+
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+    const { authorization_url } = await initializeTransaction({
+      email,
+      amountKobo: Math.round(amountDue * 100),
+      reference,
+      callbackUrl: `${siteUrl}/checkout/success`,
+      metadata: { orderId: insertResult.insertedId.toString(), orderType },
+    });
+
+    return NextResponse.json({ authorizationUrl: authorization_url });
+  } catch (err) {
+    console.error("Checkout initialize failed:", err);
+    const message = err instanceof Error ? err.message : "Checkout failed. Please try again.";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}

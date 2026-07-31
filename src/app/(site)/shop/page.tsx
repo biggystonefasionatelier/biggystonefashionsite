@@ -1,0 +1,31 @@
+import { getProducts } from "@/lib/products";
+import ProductCard from "@/components/ProductCard";
+
+export const metadata = { title: "Shop | Biggystone Fashion Atelier" };
+
+export default async function ShopPage() {
+  const products = await getProducts("retail");
+
+  return (
+    <div className="mx-auto max-w-6xl px-4 py-12">
+      <h1 className="text-2xl font-bold">Shop</h1>
+      <p className="mt-2 text-sm text-neutral-600">
+        In-stock pieces — order today, ships same-day/next-day for Unilag,
+        or nationwide with a tracked delivery label.
+      </p>
+
+      {products.length === 0 ? (
+        <p className="mt-8 text-sm text-neutral-500">
+          New pieces are being added — check back soon, or follow us on
+          Instagram for the first look.
+        </p>
+      ) : (
+        <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+          {products.map((product) => (
+            <ProductCard key={product.id} product={product} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

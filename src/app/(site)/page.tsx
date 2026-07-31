@@ -1,0 +1,133 @@
+import Link from "next/link";
+import { getProducts } from "@/lib/products";
+import ProductCard from "@/components/ProductCard";
+import SignupForm from "@/components/SignupForm";
+
+export default async function HomePage() {
+  const featured = await getProducts("retail", 8);
+
+  return (
+    <div>
+      {/* Hero */}
+      <section className="bg-brand-black px-4 py-20 text-center text-brand-gold-light">
+        <h1 className="mx-auto max-w-2xl text-3xl font-bold sm:text-4xl">
+          Luxury-look jewelry. Real prices.
+        </h1>
+        <p className="mx-auto mt-4 max-w-xl text-brand-gold">
+          New pieces every month, from ₦1,000 — and this September, launch
+          pricing on everything.
+        </p>
+        <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+          <Link
+            href="/shop"
+            className="rounded-full bg-brand-gold px-6 py-3 text-sm font-medium text-brand-black"
+          >
+            Shop the September Sale
+          </Link>
+          <Link href="/delivery" className="text-sm underline underline-offset-4">
+            Unilag? Pick up same-day →
+          </Link>
+        </div>
+      </section>
+
+      {/* Discount banner */}
+      <section className="bg-brand-gold-light px-4 py-4 text-center text-sm text-neutral-800">
+        <strong>September Sale — launch pricing, all month.</strong> Ends
+        September 30.
+      </section>
+
+      {/* Value props */}
+      <section className="mx-auto grid max-w-6xl gap-6 px-4 py-14 sm:grid-cols-2 lg:grid-cols-4">
+        {[
+          {
+            title: "Affordable luxury",
+            body: "Pearl, crystal, and statement pieces that look far more expensive than they cost. Most under ₦5,000.",
+          },
+          {
+            title: "Fast, tracked delivery",
+            body: "Same-day/next-day pickup for Unilag. Nationwide shipping with a tracked delivery label on every order.",
+          },
+          {
+            title: "New drops monthly",
+            body: "Styles that match what's actually trending — not stock that's been sitting since last year.",
+          },
+          {
+            title: "Buying in bulk?",
+            body: "Pre-order wholesale pricing for resellers and boutiques.",
+            link: { href: "/wholesale", label: "See wholesale pricing" },
+          },
+        ].map((card) => (
+          <div key={card.title} className="rounded-xl border border-black/10 p-5">
+            <p className="font-bold">{card.title}</p>
+            <p className="mt-2 text-sm text-neutral-600">{card.body}</p>
+            {card.link && (
+              <Link href={card.link.href} className="mt-2 inline-block text-sm underline">
+                {card.link.label} →
+              </Link>
+            )}
+          </div>
+        ))}
+      </section>
+
+      {/* Featured collection */}
+      <section className="mx-auto max-w-6xl px-4 py-10">
+        <h2 className="text-xl font-bold">This month&apos;s edit</h2>
+        {featured.length === 0 ? (
+          <p className="mt-4 text-sm text-neutral-500">
+            New pieces are being added — check back soon.
+          </p>
+        ) : (
+          <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+            {featured.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* Email + birthday signup */}
+      <section className="bg-neutral-50 px-4 py-14">
+        <div className="mx-auto max-w-2xl text-center">
+          <h2 className="text-xl font-bold">Get first access — and a birthday gift</h2>
+          <p className="mt-2 text-sm text-neutral-600">
+            Drop your email and birthday. You&apos;ll get the first look at new
+            drops, September&apos;s discount code, and something extra the week
+            of your birthday.
+          </p>
+          <div className="mt-6">
+            <SignupForm />
+          </div>
+        </div>
+      </section>
+
+      {/* About teaser */}
+      <section className="mx-auto max-w-3xl px-4 py-14 text-center">
+        <h2 className="text-xl font-bold">Why Biggystone</h2>
+        <p className="mt-3 text-sm text-neutral-600">
+          Biggystone Fashion Atelier started in Lagos with one idea: you
+          shouldn&apos;t have to choose between looking expensive and staying in
+          budget. Every piece is picked to feel like a statement, priced like
+          a treat.
+        </p>
+        <Link href="/about" className="mt-3 inline-block text-sm underline">
+          Read our story →
+        </Link>
+      </section>
+
+      {/* Final CTA */}
+      <section className="bg-brand-black px-4 py-14 text-center text-brand-gold-light">
+        <h2 className="text-xl font-bold">Ready to shop?</h2>
+        <p className="mt-2 text-sm text-brand-gold">
+          September&apos;s discount won&apos;t last. Neither will the pieces
+          everyone&apos;s already asking about.
+        </p>
+        <Link
+          href="/shop"
+          className="mt-5 inline-block rounded-full bg-brand-gold px-6 py-3 text-sm font-medium text-brand-black"
+        >
+          Shop now
+        </Link>
+      </section>
+    </div>
+  );
+}
