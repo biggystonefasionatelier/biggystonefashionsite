@@ -11,14 +11,14 @@
     "create-admin": "node scripts/create-admin.mjs"
   },
   "dependencies": {
+    "@vercel/blob": "^2.6.1",
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.4.7",
+    "jose": "^5.9.6",
+    "mongodb": "^6.12.0",
     "next": "16.2.12",
     "react": "19.2.4",
     "react-dom": "19.2.4",
-    "mongodb": "^6.12.0",
-    "bcryptjs": "^2.4.3",
-    "jose": "^5.9.6",
-    "@vercel/blob": "^0.27.1",
-    "dotenv": "^16.4.7",
     "zod": "^3.24.1"
   },
   "devDependencies": {

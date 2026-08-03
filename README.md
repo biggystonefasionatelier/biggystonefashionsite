@@ -50,9 +50,9 @@ folder, and fill in the real values from steps 1-2 above. For
 node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
 ```
 
-Leave `BLOB_READ_WRITE_TOKEN` blank for now — you'll get that in step 6
-once your Vercel project exists. Never share `.env.local` or paste its
-contents anywhere public.
+Leave the Blob-related lines blank for now — you'll get those in step 6
+once your Vercel project exists and you run `vercel env pull`. Never
+share `.env.local` or paste its contents anywhere public.
 
 ## 5. Run it locally (optional, to preview before deploying)
 
@@ -78,9 +78,12 @@ is set (step 6), but everything else works locally first.
    Set `NEXT_PUBLIC_SITE_URL` to your actual Vercel URL or custom domain.
 4. Click **Deploy**.
 5. Once deployed, go to your Vercel project -> **Storage -> Create
-   Database -> Blob**, create a store, and connect it to this project —
-   this automatically adds `BLOB_READ_WRITE_TOKEN` to your environment
-   variables. Redeploy once so the running site picks it up.
+   Database -> Blob**, create a store, and connect it to this project.
+   Nothing else to configure — Vercel authenticates photo uploads
+   automatically for the deployed site. (If you want photo upload to
+   also work when running locally on your machine, run
+   `vercel env pull .env.local` afterward — that token expires after
+   about 12 hours, so re-run it if local uploads stop working.)
 6. Go back to Paystack (step 2.3) and set the webhook URL using your
    real domain.
 7. Connect your custom domain under **Vercel -> Settings -> Domains** if
