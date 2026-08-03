@@ -8,7 +8,7 @@ export async function addBrevoContact(params: {
   email: string;
   name: string;
   phone: string;
-  birthday?: string; // YYYY-MM-DD
+  birthday?: string; // MM-DD - no year is ever collected from customers
 }) {
   const apiKey = process.env.BREVO_API_KEY;
   const listId = process.env.BREVO_LIST_ID;
@@ -28,6 +28,13 @@ export async function addBrevoContact(params: {
     ? `+234${params.phone.trim().slice(1)}`
     : params.phone.trim();
 
+  // Brevo's BIRTHDAY attribute needs a full date, but we never collect a
+  // birth year - 2000 (a leap year, so Feb 29 works too) is just a
+  // placeholder to satisfy the format. Brevo's birthday automation only
+  // matches month/day against today, so the placeholder year is never
+  // seen or used anywhere.
+  const brevoBirthday = params.birthday ? `2000-${params.birthday}` : undefined;
+
   const res = await fetch("https://api.brevo.com/v3/contacts", {
     method: "POST",
     headers: {
@@ -43,7 +50,7 @@ export async function addBrevoContact(params: {
         FIRSTNAME: firstName || "",
         LASTNAME: lastName || "",
         SMS: smsNumber,
-        ...(params.birthday ? { BIRTHDAY: params.birthday } : {}),
+        ...(brevoBirthday ? { BIRTHDAY: brevoBirthday } : {}),
       },
     }),
   });

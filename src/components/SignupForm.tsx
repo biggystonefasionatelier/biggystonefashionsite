@@ -4,6 +4,11 @@ import { useState, type FormEvent } from "react";
 
 type Status = "idle" | "submitting" | "success" | "error";
 
+const MONTHS = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
 export default function SignupForm() {
   const [status, setStatus] = useState<Status>("idle");
   const [errorMsg, setErrorMsg] = useState("");
@@ -14,11 +19,13 @@ export default function SignupForm() {
     setErrorMsg("");
 
     const form = new FormData(e.currentTarget);
+    const birthMonth = String(form.get("birthMonth") ?? "");
+    const birthDay = String(form.get("birthDay") ?? "");
     const payload = {
       name: String(form.get("name") ?? ""),
       email: String(form.get("email") ?? ""),
       phone: String(form.get("phone") ?? ""),
-      birthday: String(form.get("birthday") ?? ""),
+      birthday: birthMonth && birthDay ? `${birthMonth.padStart(2, "0")}-${birthDay.padStart(2, "0")}` : "",
     };
 
     try {
@@ -95,15 +102,35 @@ export default function SignupForm() {
         />
       </div>
       <div className="flex-1">
-        <label className="block text-xs text-neutral-500" htmlFor="signup-birthday">
-          Birthday
-        </label>
-        <input
-          id="signup-birthday"
-          name="birthday"
-          type="date"
-          className="mt-1 w-full rounded-md border border-black/15 px-3 py-2 text-sm"
-        />
+        <label className="block text-xs text-neutral-500">Birthday (no year needed)</label>
+        <div className="mt-1 flex gap-2">
+          <select
+            name="birthMonth"
+            defaultValue=""
+            aria-label="Birth month"
+            className="w-full rounded-md border border-black/15 px-2 py-2 text-sm"
+          >
+            <option value="">Month</option>
+            {MONTHS.map((month, i) => (
+              <option key={month} value={i + 1}>
+                {month}
+              </option>
+            ))}
+          </select>
+          <select
+            name="birthDay"
+            defaultValue=""
+            aria-label="Birth day"
+            className="w-full rounded-md border border-black/15 px-2 py-2 text-sm"
+          >
+            <option value="">Day</option>
+            {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
+              <option key={day} value={day}>
+                {day}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
       <button
         type="submit"

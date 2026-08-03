@@ -10,9 +10,10 @@ export const signupSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(100),
   email: z.string().trim().email("Enter a valid email").max(200),
   phone: z.string().trim().min(7, "Enter a valid phone number").max(20),
+  // Month-day only, on purpose - customers aren't asked for their birth year.
   birthday: z
     .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, "Birthday must be in YYYY-MM-DD format")
+    .regex(/^(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/, "Birthday must be in MM-DD format")
     .optional()
     .or(z.literal("")),
 });
