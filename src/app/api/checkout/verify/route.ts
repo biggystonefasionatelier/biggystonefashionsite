@@ -2,15 +2,20 @@ import { NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 import { getDb } from "@/lib/mongodb";
 import { verifyTransaction } from "@/lib/paystack";
+import { markGiftEligibilityIfQualifying } from "@/lib/loyalty";
 
 type OrderItemDoc = { product_id: string; product_name: string; quantity: number; unit_price: number };
 type OrderDoc = {
   _id: ObjectId;
+  email: string;
   status: string;
   total: number;
   order_type: "retail" | "wholesale";
   order_items: OrderItemDoc[];
   paystack_reference: string;
+  gift_eligible?: boolean;
+  gift_number?: number;
+  gift_name?: string;
 };
 
 /**
@@ -70,7 +75,10 @@ export async function GET(request: Request) {
       }
     }
 
-    return NextResponse.json({ status: "paid", order: { ...order, status: "paid" } });
+    await markGiftEligibilityIfQualifying(db, order._id, order.email, order.order_type, order.total);
+    const updatedOrder = await orders.findOne({ _id: order._id });
+
+    return NextResponse.json({ status: "paid", order: updatedOrder });
   } catch (err) {
     console.error("Checkout verify failed:", err);
     return NextResponse.json({ error: "Could not verify payment" }, { status: 500 });

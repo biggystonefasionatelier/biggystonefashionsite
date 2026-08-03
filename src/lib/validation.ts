@@ -41,6 +41,11 @@ export const checkoutInitSchema = z.object({
   depositOnly: z.boolean().optional().default(false),
 });
 
+export const claimGiftSchema = z.object({
+  reference: z.string().trim().min(1),
+  giftNumber: z.number().int().min(1).max(10),
+});
+
 export const productSchema = z.object({
   name: z.string().trim().min(1).max(200),
   slug: z

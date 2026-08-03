@@ -16,6 +16,8 @@ type Order = {
   deposit_only: boolean;
   created_at: string;
   order_items: OrderItem[];
+  gift_number?: number;
+  gift_name?: string;
 };
 
 const STATUSES = ["pending", "paid", "failed", "fulfilled", "cancelled"];
@@ -93,6 +95,12 @@ export default function AdminOrdersPage() {
                   </li>
                 ))}
               </ul>
+
+              {o.gift_number && (
+                <p className="mt-2 border-t border-black/5 pt-2 text-xs font-medium text-brand-black">
+                  🎁 Loyalty gift picked: #{o.gift_number} — {o.gift_name}
+                </p>
+              )}
             </div>
           ))}
         </div>

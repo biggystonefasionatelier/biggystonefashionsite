@@ -2,10 +2,12 @@ import { NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 import { getDb } from "@/lib/mongodb";
 import { verifyWebhookSignature } from "@/lib/paystack";
+import { markGiftEligibilityIfQualifying } from "@/lib/loyalty";
 
 type OrderItemDoc = { product_id: string; product_name: string; quantity: number; unit_price: number };
 type OrderDoc = {
   _id: ObjectId;
+  email: string;
   status: string;
   total: number;
   order_type: "retail" | "wholesale";
@@ -69,6 +71,8 @@ export async function POST(request: Request) {
         ]);
       }
     }
+
+    await markGiftEligibilityIfQualifying(db, order._id, order.email, order.order_type, order.total);
 
     return NextResponse.json({ received: true });
   } catch (err) {

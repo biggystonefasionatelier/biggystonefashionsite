@@ -37,6 +37,20 @@ async function run() {
 
   await db.collection("admin_users").createIndex({ email: 1 }, { unique: true });
 
+  await db.collection("orders").createIndex({ email: 1, order_type: 1, status: 1, total: 1 });
+
+  // Loyalty gift picker: 10 numbered slots. Customers only ever see the
+  // number until they pick one - fill in real name/description/image_url
+  // for each from /admin/gifts once you know what they are.
+  await db.collection("gifts").createIndex({ number: 1 }, { unique: true });
+  for (let number = 1; number <= 10; number++) {
+    await db.collection("gifts").updateOne(
+      { number },
+      { $setOnInsert: { number, name: `Gift #${number}`, description: "", image_url: null } },
+      { upsert: true }
+    );
+  }
+
   console.log("Indexes created. Your database is ready.");
 }
 

@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useCart } from "@/components/CartContext";
+import GiftPicker from "@/components/GiftPicker";
 
 type VerifyState = "checking" | "paid" | "failed" | "error";
 
@@ -12,6 +13,7 @@ function SuccessContent() {
   const reference = params.get("reference") ?? params.get("trxref");
   const { clear } = useCart();
   const [state, setState] = useState<VerifyState>(reference ? "checking" : "error");
+  const [showGiftPicker, setShowGiftPicker] = useState(false);
 
   useEffect(() => {
     if (!reference) return;
@@ -22,6 +24,9 @@ function SuccessContent() {
         if (data.status === "paid") {
           setState("paid");
           clear();
+          if (data.order?.gift_eligible && !data.order?.gift_number) {
+            setShowGiftPicker(true);
+          }
         } else {
           setState("failed");
         }
@@ -67,6 +72,8 @@ function SuccessContent() {
           </p>
         </>
       )}
+
+      {showGiftPicker && reference && <GiftPicker reference={reference} />}
     </div>
   );
 }
