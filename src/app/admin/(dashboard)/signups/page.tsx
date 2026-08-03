@@ -6,17 +6,19 @@ type Signup = {
   id: string;
   name: string;
   email: string;
+  phone: string;
   birthday: string | null;
   brevo_synced: boolean;
   created_at: string;
 };
 
 function toCsv(signups: Signup[]): string {
-  const header = "Name,Email,Birthday,Synced to Brevo,Joined\n";
+  const header = "Name,Email,Phone,Birthday,Synced to Brevo,Joined\n";
   const rows = signups.map((s) =>
     [
       `"${s.name.replace(/"/g, '""')}"`,
       s.email,
+      s.phone,
       s.birthday ?? "",
       s.brevo_synced ? "Yes" : "No",
       new Date(s.created_at).toISOString(),
@@ -70,6 +72,7 @@ export default function AdminSignupsPage() {
               <tr>
                 <th className="px-4 py-3">Name</th>
                 <th className="px-4 py-3">Email</th>
+                <th className="px-4 py-3">Phone</th>
                 <th className="px-4 py-3">Birthday</th>
                 <th className="px-4 py-3">Synced</th>
                 <th className="px-4 py-3">Joined</th>
@@ -80,6 +83,7 @@ export default function AdminSignupsPage() {
                 <tr key={s.id} className="border-b border-black/5 last:border-0">
                   <td className="px-4 py-3">{s.name}</td>
                   <td className="px-4 py-3">{s.email}</td>
+                  <td className="px-4 py-3">{s.phone}</td>
                   <td className="px-4 py-3">{s.birthday ?? "—"}</td>
                   <td className="px-4 py-3">{s.brevo_synced ? "Yes" : "No"}</td>
                   <td className="px-4 py-3">{new Date(s.created_at).toLocaleDateString()}</td>

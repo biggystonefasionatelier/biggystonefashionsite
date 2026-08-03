@@ -17,6 +17,7 @@ export default function SignupForm() {
     const payload = {
       name: String(form.get("name") ?? ""),
       email: String(form.get("email") ?? ""),
+      phone: String(form.get("phone") ?? ""),
       birthday: String(form.get("birthday") ?? ""),
     };
 
@@ -77,6 +78,20 @@ export default function SignupForm() {
           maxLength={200}
           className="mt-1 w-full rounded-md border border-black/15 px-3 py-2 text-sm"
           placeholder="you@email.com"
+        />
+      </div>
+      <div className="flex-1">
+        <label className="block text-xs text-neutral-500" htmlFor="signup-phone">
+          Phone number
+        </label>
+        <input
+          id="signup-phone"
+          name="phone"
+          type="tel"
+          required
+          maxLength={20}
+          className="mt-1 w-full rounded-md border border-black/15 px-3 py-2 text-sm"
+          placeholder="080..."
         />
       </div>
       <div className="flex-1">

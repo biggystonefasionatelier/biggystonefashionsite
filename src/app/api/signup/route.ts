@@ -31,7 +31,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const { name, email, birthday } = parsed.data;
+  const { name, email, phone, birthday } = parsed.data;
 
   try {
     const db = await getDb();
@@ -39,11 +39,11 @@ export async function POST(request: Request) {
 
     await signups.updateOne(
       { email },
-      { $set: { name, email, birthday: birthday || null }, $setOnInsert: { created_at: new Date(), brevo_synced: false } },
+      { $set: { name, email, phone, birthday: birthday || null }, $setOnInsert: { created_at: new Date(), brevo_synced: false } },
       { upsert: true }
     );
 
-    const { synced } = await addBrevoContact({ name, email, birthday: birthday || undefined });
+    const { synced } = await addBrevoContact({ name, email, phone, birthday: birthday || undefined });
 
     if (synced) {
       await signups.updateOne({ email }, { $set: { brevo_synced: true } });

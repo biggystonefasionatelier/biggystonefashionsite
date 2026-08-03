@@ -1,12 +1,13 @@
 /**
- * Server-only Brevo helper. Pushes a signup (name, email, birthday) into
- * Brevo as a contact on the configured list, so the birthday/discount
+ * Server-only Brevo helper. Pushes a signup (name, email, phone, birthday)
+ * into Brevo as a contact on the configured list, so the birthday/discount
  * automations set up in Brevo can pick them up. BREVO_API_KEY never
  * touches the browser - only called from API routes.
  */
 export async function addBrevoContact(params: {
   email: string;
   name: string;
+  phone: string;
   birthday?: string; // YYYY-MM-DD
 }) {
   const apiKey = process.env.BREVO_API_KEY;
@@ -19,6 +20,13 @@ export async function addBrevoContact(params: {
 
   const [firstName, ...rest] = params.name.trim().split(" ");
   const lastName = rest.join(" ");
+
+  // Brevo's SMS attribute expects an international format - Nigerian
+  // numbers are usually typed starting with 0 (e.g. 080...), so swap
+  // that leading 0 for the +234 country code.
+  const smsNumber = params.phone.trim().startsWith("0")
+    ? `+234${params.phone.trim().slice(1)}`
+    : params.phone.trim();
 
   const res = await fetch("https://api.brevo.com/v3/contacts", {
     method: "POST",
@@ -34,6 +42,7 @@ export async function addBrevoContact(params: {
       attributes: {
         FIRSTNAME: firstName || "",
         LASTNAME: lastName || "",
+        SMS: smsNumber,
         ...(params.birthday ? { BIRTHDAY: params.birthday } : {}),
       },
     }),
