@@ -3,6 +3,8 @@ import { getProducts } from "@/lib/products";
 import ProductCard from "@/components/ProductCard";
 import SignupForm from "@/components/SignupForm";
 
+export const revalidate = 60;
+
 export default async function HomePage() {
   const featured = await getProducts("retail", 8);
 

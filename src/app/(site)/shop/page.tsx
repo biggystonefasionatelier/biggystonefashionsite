@@ -2,6 +2,9 @@ import { getProducts } from "@/lib/products";
 import ProductCard from "@/components/ProductCard";
 
 export const metadata = { title: "Shop | Biggystone Fashion Atelier" };
+// New/edited products in the admin dashboard should show up without a
+// redeploy - revalidate this page's cached HTML at most once a minute.
+export const revalidate = 60;
 
 export default async function ShopPage() {
   const products = await getProducts("retail");
