@@ -41,6 +41,7 @@ export const checkoutInitSchema = z.object({
   orderType: z.enum(["retail", "wholesale"]),
   items: z.array(cartItemSchema).min(1, "Cart is empty"),
   depositOnly: z.boolean().optional().default(false),
+  discountCode: z.string().trim().max(50).optional().or(z.literal("")),
 });
 
 export const claimGiftSchema = z.object({

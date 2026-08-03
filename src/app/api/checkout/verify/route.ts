@@ -3,6 +3,8 @@ import { ObjectId } from "mongodb";
 import { getDb } from "@/lib/mongodb";
 import { verifyTransaction } from "@/lib/paystack";
 import { markGiftEligibilityIfQualifying } from "@/lib/loyalty";
+import { markBirthdayDiscountUsed } from "@/lib/discount";
+import { markBrevoBirthdayDiscountUsed } from "@/lib/brevo";
 
 type OrderItemDoc = { product_id: string; product_name: string; quantity: number; unit_price: number };
 type OrderDoc = {
@@ -16,6 +18,8 @@ type OrderDoc = {
   gift_eligible?: boolean;
   gift_number?: number;
   gift_name?: string;
+  discount_code?: string | null;
+  discount_amount?: number | null;
 };
 
 /**
@@ -76,6 +80,12 @@ export async function GET(request: Request) {
     }
 
     await markGiftEligibilityIfQualifying(db, order._id, order.email, order.order_type, order.total);
+
+    if (order.discount_code) {
+      await markBirthdayDiscountUsed(db, order.email);
+      await markBrevoBirthdayDiscountUsed(order.email);
+    }
+
     const updatedOrder = await orders.findOne({ _id: order._id });
 
     return NextResponse.json({ status: "paid", order: updatedOrder });

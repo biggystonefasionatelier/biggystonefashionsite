@@ -6,6 +6,11 @@ import { getDb } from "@/lib/mongodb";
 import { toProduct, type ProductDoc } from "@/lib/products";
 import { initializeTransaction } from "@/lib/paystack";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
+import {
+  BIRTHDAY_DISCOUNT_PERCENT,
+  checkBirthdayDiscountEligibility,
+  discountIneligibilityMessage,
+} from "@/lib/discount";
 
 export async function POST(request: Request) {
   const ip = getClientIp(request);
@@ -32,7 +37,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const { customerName, email, phone, address, city, orderType, items, depositOnly } =
+  const { customerName, email, phone, address, city, orderType, items, depositOnly, discountCode } =
     parsed.data;
 
   try {
@@ -98,6 +103,20 @@ export async function POST(request: Request) {
       amountDue = Math.round((total * depositPercent) / 100);
     }
 
+    // Birthday discount: retail only, one shared code, eligibility checked
+    // against the customer's signup record (see src/lib/discount.ts).
+    let discountAmount = 0;
+    let appliedDiscountCode: string | null = null;
+    if (orderType === "retail" && discountCode) {
+      const eligibility = await checkBirthdayDiscountEligibility(db, email, discountCode);
+      if (!eligibility.eligible) {
+        return NextResponse.json({ error: discountIneligibilityMessage(eligibility.reason) }, { status: 400 });
+      }
+      discountAmount = Math.round((amountDue * BIRTHDAY_DISCOUNT_PERCENT) / 100);
+      amountDue -= discountAmount;
+      appliedDiscountCode = discountCode.trim().toUpperCase();
+    }
+
     const reference = `biggystone_${randomUUID()}`;
 
     const insertResult = await db.collection("orders").insertOne({
@@ -113,6 +132,8 @@ export async function POST(request: Request) {
       paystack_reference: reference,
       created_at: new Date(),
       order_items: orderItems,
+      discount_code: appliedDiscountCode,
+      discount_amount: discountAmount || null,
     });
 
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";

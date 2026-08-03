@@ -64,3 +64,31 @@ export async function addBrevoContact(params: {
 
   return { synced: true };
 }
+
+/**
+ * Flags a contact as having redeemed their birthday discount this year, so
+ * the "day of" birthday workflow in Brevo can branch on it (e.g. skip the
+ * discount reminder and just send a celebration message instead). This
+ * doesn't reset itself automatically for next year's cycle - if that
+ * matters, the workflow's condition step should be paired with the
+ * calendar-based checks already enforced server-side in src/lib/discount.ts.
+ */
+export async function markBrevoBirthdayDiscountUsed(email: string): Promise<void> {
+  const apiKey = process.env.BREVO_API_KEY;
+  if (!apiKey) return;
+
+  const res = await fetch(`https://api.brevo.com/v3/contacts/${encodeURIComponent(email)}`, {
+    method: "PUT",
+    headers: {
+      "api-key": apiKey,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify({ attributes: { BIRTHDAY_DISCOUNT_USED: true } }),
+  });
+
+  if (res.status !== 204) {
+    const body = await res.text();
+    console.error("Brevo birthday-discount-used sync failed:", res.status, body);
+  }
+}

@@ -18,6 +18,8 @@ type Order = {
   order_items: OrderItem[];
   gift_number?: number;
   gift_name?: string;
+  discount_code?: string | null;
+  discount_amount?: number | null;
 };
 
 const STATUSES = ["pending", "paid", "failed", "fulfilled", "cancelled"];
@@ -95,6 +97,12 @@ export default function AdminOrdersPage() {
                   </li>
                 ))}
               </ul>
+
+              {o.discount_code && (
+                <p className="mt-2 border-t border-black/5 pt-2 text-xs text-neutral-600">
+                  🏷️ Discount code {o.discount_code} applied — ₦{Number(o.discount_amount).toLocaleString()} off
+                </p>
+              )}
 
               {o.gift_number && (
                 <p className="mt-2 border-t border-black/5 pt-2 text-xs font-medium text-brand-black">

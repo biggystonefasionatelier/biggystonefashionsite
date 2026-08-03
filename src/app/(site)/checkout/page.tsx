@@ -44,6 +44,7 @@ export default function CheckoutPage() {
           city: String(form.get("city") ?? ""),
           orderType,
           depositOnly,
+          discountCode: String(form.get("discountCode") ?? ""),
           items: items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
         }),
       });
@@ -133,6 +134,15 @@ export default function CheckoutPage() {
             />
             Pay deposit now, balance before delivery
           </label>
+        )}
+
+        {orderType === "retail" && (
+          <input
+            name="discountCode"
+            maxLength={50}
+            placeholder="Discount code (optional)"
+            className="rounded-md border border-black/15 px-3 py-2 text-sm uppercase placeholder:normal-case"
+          />
         )}
 
         <button

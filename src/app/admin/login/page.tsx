@@ -7,6 +7,7 @@ export default function AdminLoginPage() {
   const router = useRouter();
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -60,13 +61,22 @@ export default function AdminLoginPage() {
             placeholder="Email"
             className="rounded-md border border-brand-gold/40 bg-transparent px-3 py-2 text-sm placeholder:text-brand-gold-light/40"
           />
-          <input
-            name="password"
-            type="password"
-            required
-            placeholder="Password"
-            className="rounded-md border border-brand-gold/40 bg-transparent px-3 py-2 text-sm placeholder:text-brand-gold-light/40"
-          />
+          <div className="relative">
+            <input
+              name="password"
+              type={showPassword ? "text" : "password"}
+              required
+              placeholder="Password"
+              className="w-full rounded-md border border-brand-gold/40 bg-transparent px-3 py-2 pr-16 text-sm placeholder:text-brand-gold-light/40"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              className="absolute inset-y-0 right-3 text-xs text-brand-gold-light/70 hover:text-brand-gold-light"
+            >
+              {showPassword ? "Hide" : "Show"}
+            </button>
+          </div>
           <button
             type="submit"
             disabled={submitting}
