@@ -4,12 +4,14 @@ import { getDb } from "@/lib/mongodb";
 import { verifyTransaction } from "@/lib/paystack";
 import { markGiftEligibilityIfQualifying } from "@/lib/loyalty";
 import { markBirthdayDiscountUsed } from "@/lib/discount";
-import { markBrevoBirthdayDiscountUsed } from "@/lib/brevo";
+import { markBrevoBirthdayDiscountUsed, notifyOrderPaid } from "@/lib/brevo";
 
 type OrderItemDoc = { product_id: string; product_name: string; quantity: number; unit_price: number };
 type OrderDoc = {
   _id: ObjectId;
+  customer_name: string;
   email: string;
+  phone: string;
   status: string;
   total: number;
   order_type: "retail" | "wholesale";
@@ -85,6 +87,8 @@ export async function GET(request: Request) {
       await markBirthdayDiscountUsed(db, order.email);
       await markBrevoBirthdayDiscountUsed(order.email);
     }
+
+    await notifyOrderPaid(order);
 
     const updatedOrder = await orders.findOne({ _id: order._id });
 

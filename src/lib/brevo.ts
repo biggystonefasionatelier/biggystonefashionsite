@@ -92,3 +92,63 @@ export async function markBrevoBirthdayDiscountUsed(email: string): Promise<void
     console.error("Brevo birthday-discount-used sync failed:", res.status, body);
   }
 }
+
+/**
+ * Sends Faith a heads-up email for things she'd otherwise have to keep
+ * checking the admin dashboard for: new wholesale inquiries, signups, and
+ * paid orders. Uses Brevo's transactional email API (separate from the
+ * marketing contact list). Failures are logged, not thrown - a missed
+ * notification shouldn't ever block a real signup/order/inquiry from
+ * completing.
+ */
+export async function sendAdminNotification(subject: string, htmlContent: string): Promise<void> {
+  const apiKey = process.env.BREVO_API_KEY;
+  const notifyEmail = process.env.ADMIN_NOTIFICATION_EMAIL;
+
+  if (!apiKey || !notifyEmail) {
+    console.warn("Brevo/ADMIN_NOTIFICATION_EMAIL not configured - skipping admin notification");
+    return;
+  }
+
+  const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: {
+      "api-key": apiKey,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify({
+      sender: { name: "Biggystone Website", email: notifyEmail },
+      to: [{ email: notifyEmail }],
+      subject,
+      htmlContent,
+    }),
+  });
+
+  if (res.status !== 201) {
+    const body = await res.text();
+    console.error("Admin notification email failed:", res.status, body);
+  }
+}
+
+export async function notifyOrderPaid(order: {
+  customer_name: string;
+  email: string;
+  phone: string;
+  total: number;
+  order_type: "retail" | "wholesale";
+  order_items: { product_name: string; quantity: number; unit_price: number }[];
+}): Promise<void> {
+  const itemsList = order.order_items
+    .map((i) => `${i.quantity} × ${i.product_name} — ₦${(i.unit_price * i.quantity).toLocaleString()}`)
+    .join("<br>");
+
+  await sendAdminNotification(
+    `New paid order — ₦${order.total.toLocaleString()} (${order.customer_name})`,
+    `<p><strong>${order.customer_name}</strong> just paid for a ${order.order_type} order.</p>
+     <p>Email: ${order.email}<br>Phone: ${order.phone}</p>
+     <p>${itemsList}</p>
+     <p><strong>Total: ₦${order.total.toLocaleString()}</strong></p>
+     <p><a href="${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/admin/orders">View in admin dashboard</a></p>`
+  );
+}

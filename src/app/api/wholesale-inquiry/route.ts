@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { wholesaleInquirySchema } from "@/lib/validation";
 import { getDb } from "@/lib/mongodb";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
+import { sendAdminNotification } from "@/lib/brevo";
 
 export async function POST(request: Request) {
   const ip = getClientIp(request);
@@ -39,6 +40,14 @@ export async function POST(request: Request) {
       message: parsed.data.message || null,
       created_at: new Date(),
     });
+
+    await sendAdminNotification(
+      `New wholesale inquiry — ${parsed.data.name}`,
+      `<p><strong>${parsed.data.name}</strong>${parsed.data.businessName ? ` (${parsed.data.businessName})` : ""} is interested in wholesale.</p>
+       <p>Email: ${parsed.data.email}<br>Phone: ${parsed.data.phone}<br>Quantity: ${parsed.data.quantityInterested}</p>
+       ${parsed.data.message ? `<p>Message: ${parsed.data.message}</p>` : ""}
+       <p><a href="${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/admin/wholesale">View in admin dashboard</a></p>`
+    );
 
     return NextResponse.json({ ok: true });
   } catch (err) {

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { signupSchema } from "@/lib/validation";
 import { getDb } from "@/lib/mongodb";
-import { addBrevoContact } from "@/lib/brevo";
+import { addBrevoContact, sendAdminNotification } from "@/lib/brevo";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 
 export async function POST(request: Request) {
@@ -48,6 +48,13 @@ export async function POST(request: Request) {
     if (synced) {
       await signups.updateOne({ email }, { $set: { brevo_synced: true } });
     }
+
+    await sendAdminNotification(
+      `New signup — ${name}`,
+      `<p><strong>${name}</strong> joined the email/birthday list.</p>
+       <p>Email: ${email}<br>Phone: ${phone}${birthday ? `<br>Birthday: ${birthday}` : ""}</p>
+       <p><a href="${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/admin/signups">View in admin dashboard</a></p>`
+    );
 
     return NextResponse.json({ ok: true });
   } catch (err) {
