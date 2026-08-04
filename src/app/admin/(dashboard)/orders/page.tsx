@@ -20,8 +20,8 @@ type Order = {
   gift_name?: string;
   discount_code?: string | null;
   discount_amount?: number | null;
-  delivery_method?: "pickup" | "local" | "nationwide" | null;
-  delivery_area?: string | null;
+  delivery_method?: "pickup" | "delivery" | null;
+  delivery_zone_label?: string | null;
   delivery_fee?: number | null;
   delivery_note?: string | null;
 };
@@ -29,12 +29,9 @@ type Order = {
 function deliveryLabel(o: Order): string | null {
   if (!o.delivery_method) return null;
   if (o.delivery_method === "pickup") return "Pickup";
-  if (o.delivery_method === "local") {
-    const area = o.delivery_area ? o.delivery_area[0].toUpperCase() + o.delivery_area.slice(1) : "Local";
-    const fee = o.delivery_fee ? `₦${o.delivery_fee.toLocaleString()}` : "Free (Friday)";
-    return `Local delivery — ${area} (${fee})`;
-  }
-  return "Nationwide shipping — fee to confirm";
+  const zone = o.delivery_zone_label ?? "Delivery";
+  const fee = o.delivery_fee ? `₦${o.delivery_fee.toLocaleString()}` : "Free (Friday)";
+  return `${zone} (${fee})`;
 }
 
 const STATUSES = ["pending", "paid", "failed", "fulfilled", "cancelled"];

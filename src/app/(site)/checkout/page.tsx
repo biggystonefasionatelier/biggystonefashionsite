@@ -3,10 +3,11 @@
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useCart } from "@/components/CartContext";
+import { DELIVERY_ZONES } from "@/lib/delivery";
 
-const LOCAL_FEES = { unilag: 1000, bariga: 500, iwaya: 1500 } as const;
-type LocalArea = keyof typeof LOCAL_FEES;
-type DeliveryMethod = "pickup" | "local" | "nationwide";
+type DeliveryMethod = "pickup" | "delivery";
+
+const ZONE_GROUPS = ["Lagos Mainland", "Lagos Island", "Outside Lagos"] as const;
 
 export default function CheckoutPage() {
   const { items, subtotal } = useCart();
@@ -14,8 +15,9 @@ export default function CheckoutPage() {
   const [error, setError] = useState("");
   const [depositOnly, setDepositOnly] = useState(false);
   const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>("pickup");
-  const [deliveryArea, setDeliveryArea] = useState<LocalArea>("bariga");
+  const [deliveryZone, setDeliveryZone] = useState(DELIVERY_ZONES[0].id);
   const isFridayToday = new Date().getDay() === 5;
+  const selectedZone = DELIVERY_ZONES.find((z) => z.id === deliveryZone);
 
   if (items.length === 0) {
     return (
@@ -53,7 +55,7 @@ export default function CheckoutPage() {
           depositOnly,
           discountCode: String(form.get("discountCode") ?? ""),
           deliveryMethod: orderType === "retail" ? deliveryMethod : undefined,
-          deliveryArea: orderType === "retail" && deliveryMethod === "local" ? deliveryArea : undefined,
+          deliveryZone: orderType === "retail" && deliveryMethod === "delivery" ? deliveryZone : undefined,
           deliveryNote: String(form.get("deliveryNote") ?? ""),
           items: items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
         }),
@@ -171,48 +173,44 @@ export default function CheckoutPage() {
                   <input
                     type="radio"
                     name="deliveryMethodChoice"
-                    checked={deliveryMethod === "local"}
-                    onChange={() => setDeliveryMethod("local")}
+                    checked={deliveryMethod === "delivery"}
+                    onChange={() => setDeliveryMethod("delivery")}
                   />
-                  Local delivery — Unilag / Bariga / Iwaya & environs
+                  Delivery
                 </label>
-                {deliveryMethod === "local" && (
-                  <div className="ml-6 grid gap-1">
-                    {(Object.keys(LOCAL_FEES) as LocalArea[]).map((area) => (
-                      <label key={area} className="flex items-center gap-2 text-neutral-600">
-                        <input
-                          type="radio"
-                          name="deliveryAreaChoice"
-                          checked={deliveryArea === area}
-                          onChange={() => setDeliveryArea(area)}
-                        />
-                        <span className="capitalize">{area}</span> — {" "}
-                        {isFridayToday ? (
-                          <span className="text-green-700">Free today (Friday delivery)</span>
-                        ) : (
-                          `₦${LOCAL_FEES[area].toLocaleString()}`
-                        )}
-                      </label>
-                    ))}
-                    <p className="text-xs text-neutral-500">
-                      Local delivery is always free on Fridays.
+
+                {deliveryMethod === "delivery" && (
+                  <div className="ml-6 grid gap-2">
+                    <select
+                      value={deliveryZone}
+                      onChange={(e) => setDeliveryZone(e.target.value)}
+                      className="rounded-md border border-black/15 px-2 py-2 text-sm"
+                    >
+                      {ZONE_GROUPS.map((group) => (
+                        <optgroup key={group} label={group}>
+                          {DELIVERY_ZONES.filter((z) => z.group === group).map((z) => (
+                            <option key={z.id} value={z.id}>
+                              {z.label} — ₦{z.fee.toLocaleString()} ({z.eta})
+                            </option>
+                          ))}
+                        </optgroup>
+                      ))}
+                    </select>
+                    {selectedZone && (
+                      <p className="text-xs text-neutral-500">
+                        Covers: {selectedZone.areas.join(", ")}
+                      </p>
+                    )}
+                    <p className="text-xs">
+                      {isFridayToday ? (
+                        <span className="font-medium text-green-700">
+                          Free today — every delivery is free on Fridays!
+                        </span>
+                      ) : (
+                        <span className="text-neutral-500">Delivery is always free on Fridays.</span>
+                      )}
                     </p>
                   </div>
-                )}
-                <label className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    name="deliveryMethodChoice"
-                    checked={deliveryMethod === "nationwide"}
-                    onChange={() => setDeliveryMethod("nationwide")}
-                  />
-                  Nationwide shipping
-                </label>
-                {deliveryMethod === "nationwide" && (
-                  <p className="ml-6 text-xs text-neutral-500">
-                    Shipping cost depends on your location — we&apos;ll confirm it with you on
-                    WhatsApp before your order is dispatched.
-                  </p>
                 )}
               </div>
             </div>

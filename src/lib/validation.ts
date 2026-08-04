@@ -42,8 +42,8 @@ export const checkoutInitSchema = z.object({
   items: z.array(cartItemSchema).min(1, "Cart is empty"),
   depositOnly: z.boolean().optional().default(false),
   discountCode: z.string().trim().max(50).optional().or(z.literal("")),
-  deliveryMethod: z.enum(["pickup", "local", "nationwide"]).optional(),
-  deliveryArea: z.enum(["unilag", "bariga", "iwaya"]).optional(),
+  deliveryMethod: z.enum(["pickup", "delivery"]).optional(),
+  deliveryZone: z.string().trim().max(50).optional().or(z.literal("")),
   deliveryNote: z.string().trim().max(500).optional().or(z.literal("")),
 });
 

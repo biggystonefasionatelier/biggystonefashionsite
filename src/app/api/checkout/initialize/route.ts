@@ -11,7 +11,7 @@ import {
   checkBirthdayDiscountEligibility,
   discountIneligibilityMessage,
 } from "@/lib/discount";
-import { calculateDeliveryFee, type DeliveryMethod, type LocalArea } from "@/lib/delivery";
+import { calculateDeliveryFee, findDeliveryZone, type DeliveryMethod } from "@/lib/delivery";
 
 export async function POST(request: Request) {
   const ip = getClientIp(request);
@@ -49,7 +49,7 @@ export async function POST(request: Request) {
     depositOnly,
     discountCode,
     deliveryMethod,
-    deliveryArea,
+    deliveryZone,
     deliveryNote,
   } = parsed.data;
 
@@ -130,12 +130,12 @@ export async function POST(request: Request) {
       appliedDiscountCode = discountCode.trim().toUpperCase();
     }
 
-    // Local delivery (Unilag/Bariga/Iwaya) is free on Fridays; nationwide
-    // shipping isn't priced here since it varies by destination - that fee
-    // gets confirmed with the customer manually after checkout.
+    // Delivery is priced by zone (see src/lib/delivery.ts); free for
+    // everyone, in every zone, on Fridays.
     let deliveryFee = 0;
+    const zone = findDeliveryZone(deliveryZone);
     if (orderType === "retail" && deliveryMethod) {
-      deliveryFee = calculateDeliveryFee(deliveryMethod as DeliveryMethod, deliveryArea as LocalArea | undefined);
+      deliveryFee = calculateDeliveryFee(deliveryMethod as DeliveryMethod, deliveryZone);
       amountDue += deliveryFee;
     }
 
@@ -157,7 +157,8 @@ export async function POST(request: Request) {
       discount_code: appliedDiscountCode,
       discount_amount: discountAmount || null,
       delivery_method: orderType === "retail" ? deliveryMethod ?? null : null,
-      delivery_area: orderType === "retail" ? deliveryArea ?? null : null,
+      delivery_zone: orderType === "retail" ? deliveryZone || null : null,
+      delivery_zone_label: orderType === "retail" ? zone?.label ?? null : null,
       delivery_fee: deliveryFee || null,
       delivery_note: deliveryNote || null,
     });

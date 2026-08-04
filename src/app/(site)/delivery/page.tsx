@@ -1,29 +1,52 @@
+import { DELIVERY_ZONES } from "@/lib/delivery";
+
 export const metadata = { title: "Delivery & Returns | Biggystone Fashion Atelier" };
+
+const GROUPS = ["Lagos Mainland", "Lagos Island", "Outside Lagos"] as const;
 
 export default function DeliveryPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-12">
       <h1 className="text-2xl font-bold">Delivery & Returns</h1>
 
-      <h2 className="mt-8 font-bold">Unilag / Bariga / Iwaya pickup &amp; delivery</h2>
+      <h2 className="mt-8 font-bold">Pickup</h2>
       <p className="mt-2 text-neutral-700">
-        Same-day or next-day pickup and delivery around Unilag, Bariga, Iwaya,
-        and environs. Exact timing depends on when your order comes in —
-        you&apos;ll get a confirmation with your expected delivery window.
-      </p>
-      <p className="mt-2 text-neutral-700">
-        Pickup is always free. Local delivery is ₦1,000 (Unilag), ₦500
-        (Bariga), or ₦1,500 (Iwaya) — and <strong>free every Friday</strong>,
-        no matter the area. If you&apos;re just outside these areas, pick
-        whichever is closest to you.
+        Free, always. Exact pickup timing depends on when your order comes
+        in — you&apos;ll get a confirmation with your expected window.
       </p>
 
-      <h2 className="mt-8 font-bold">Nationwide shipping</h2>
+      <h2 className="mt-8 font-bold">Delivery</h2>
       <p className="mt-2 text-neutral-700">
-        We ship anywhere in Nigeria with a tracked delivery label on every
-        order. Shipping cost depends on your location, so it&apos;s confirmed
-        with you on WhatsApp after checkout, before your order is dispatched.
+        We deliver anywhere in Nigeria with a tracked delivery label on every
+        order. Pick your area at checkout to see the exact fee — and{" "}
+        <strong>delivery is free for everyone, everywhere, every Friday</strong>.
       </p>
+
+      {GROUPS.map((group) => (
+        <div key={group} className="mt-6">
+          <h3 className="font-semibold text-neutral-800">{group}</h3>
+          <div className="mt-2 overflow-x-auto rounded-lg border border-black/10">
+            <table className="w-full text-left text-sm">
+              <thead className="border-b border-black/10 text-xs uppercase text-neutral-500">
+                <tr>
+                  <th className="px-3 py-2">Areas covered</th>
+                  <th className="px-3 py-2">Fee</th>
+                  <th className="px-3 py-2">Delivery time</th>
+                </tr>
+              </thead>
+              <tbody>
+                {DELIVERY_ZONES.filter((z) => z.group === group).map((zone) => (
+                  <tr key={zone.id} className="border-b border-black/5 last:border-0">
+                    <td className="px-3 py-2 text-neutral-700">{zone.areas.join(", ")}</td>
+                    <td className="px-3 py-2 whitespace-nowrap">₦{zone.fee.toLocaleString()}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-neutral-500">{zone.eta}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ))}
 
       <h2 className="mt-8 font-bold">Pre-order wholesale lead time</h2>
       <p className="mt-2 text-neutral-700">
