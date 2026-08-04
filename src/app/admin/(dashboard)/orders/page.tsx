@@ -20,7 +20,22 @@ type Order = {
   gift_name?: string;
   discount_code?: string | null;
   discount_amount?: number | null;
+  delivery_method?: "pickup" | "local" | "nationwide" | null;
+  delivery_area?: string | null;
+  delivery_fee?: number | null;
+  delivery_note?: string | null;
 };
+
+function deliveryLabel(o: Order): string | null {
+  if (!o.delivery_method) return null;
+  if (o.delivery_method === "pickup") return "Pickup";
+  if (o.delivery_method === "local") {
+    const area = o.delivery_area ? o.delivery_area[0].toUpperCase() + o.delivery_area.slice(1) : "Local";
+    const fee = o.delivery_fee ? `₦${o.delivery_fee.toLocaleString()}` : "Free (Friday)";
+    return `Local delivery — ${area} (${fee})`;
+  }
+  return "Nationwide shipping — fee to confirm";
+}
 
 const STATUSES = ["pending", "paid", "failed", "fulfilled", "cancelled"];
 
@@ -97,6 +112,13 @@ export default function AdminOrdersPage() {
                   </li>
                 ))}
               </ul>
+
+              {deliveryLabel(o) && (
+                <p className="mt-2 border-t border-black/5 pt-2 text-xs text-neutral-600">
+                  🚚 {deliveryLabel(o)}
+                  {o.delivery_note && <span className="block text-neutral-500">Note: {o.delivery_note}</span>}
+                </p>
+              )}
 
               {o.discount_code && (
                 <p className="mt-2 border-t border-black/5 pt-2 text-xs text-neutral-600">

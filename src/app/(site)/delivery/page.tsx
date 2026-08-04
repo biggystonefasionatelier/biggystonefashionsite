@@ -5,18 +5,24 @@ export default function DeliveryPage() {
     <div className="mx-auto max-w-3xl px-4 py-12">
       <h1 className="text-2xl font-bold">Delivery & Returns</h1>
 
-      <h2 className="mt-8 font-bold">Unilag pickup / delivery</h2>
+      <h2 className="mt-8 font-bold">Unilag / Bariga / Iwaya pickup &amp; delivery</h2>
       <p className="mt-2 text-neutral-700">
-        Same-day or next-day pickup and delivery around Unilag/Bariga. Exact
-        timing depends on when your order comes in — you&apos;ll get a
-        confirmation with your expected delivery window.
+        Same-day or next-day pickup and delivery around Unilag, Bariga, Iwaya,
+        and environs. Exact timing depends on when your order comes in —
+        you&apos;ll get a confirmation with your expected delivery window.
+      </p>
+      <p className="mt-2 text-neutral-700">
+        Pickup is always free. Local delivery is ₦1,000 (Unilag), ₦500
+        (Bariga), or ₦1,500 (Iwaya) — and <strong>free every Friday</strong>,
+        no matter the area. If you&apos;re just outside these areas, pick
+        whichever is closest to you.
       </p>
 
       <h2 className="mt-8 font-bold">Nationwide shipping</h2>
       <p className="mt-2 text-neutral-700">
         We ship anywhere in Nigeria with a tracked delivery label on every
-        order. Delivery timing depends on your location — you&apos;ll see an
-        estimate at checkout.
+        order. Shipping cost depends on your location, so it&apos;s confirmed
+        with you on WhatsApp after checkout, before your order is dispatched.
       </p>
 
       <h2 className="mt-8 font-bold">Pre-order wholesale lead time</h2>
@@ -29,7 +35,7 @@ export default function DeliveryPage() {
       <h2 className="mt-8 font-bold">Returns & exchanges</h2>
       <p className="mt-2 text-neutral-700">
         If an item arrives damaged or isn&apos;t what you ordered, reach out
-        within 48 hours of delivery via WhatsApp or email (below) and
+        within 24 hours of delivery via WhatsApp or email (below) and
         we&apos;ll sort it out.
       </p>
 

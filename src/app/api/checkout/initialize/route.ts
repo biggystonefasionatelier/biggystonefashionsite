@@ -11,6 +11,7 @@ import {
   checkBirthdayDiscountEligibility,
   discountIneligibilityMessage,
 } from "@/lib/discount";
+import { calculateDeliveryFee, type DeliveryMethod, type LocalArea } from "@/lib/delivery";
 
 export async function POST(request: Request) {
   const ip = getClientIp(request);
@@ -37,8 +38,20 @@ export async function POST(request: Request) {
     );
   }
 
-  const { customerName, email, phone, address, city, orderType, items, depositOnly, discountCode } =
-    parsed.data;
+  const {
+    customerName,
+    email,
+    phone,
+    address,
+    city,
+    orderType,
+    items,
+    depositOnly,
+    discountCode,
+    deliveryMethod,
+    deliveryArea,
+    deliveryNote,
+  } = parsed.data;
 
   try {
     const db = await getDb();
@@ -117,6 +130,15 @@ export async function POST(request: Request) {
       appliedDiscountCode = discountCode.trim().toUpperCase();
     }
 
+    // Local delivery (Unilag/Bariga/Iwaya) is free on Fridays; nationwide
+    // shipping isn't priced here since it varies by destination - that fee
+    // gets confirmed with the customer manually after checkout.
+    let deliveryFee = 0;
+    if (orderType === "retail" && deliveryMethod) {
+      deliveryFee = calculateDeliveryFee(deliveryMethod as DeliveryMethod, deliveryArea as LocalArea | undefined);
+      amountDue += deliveryFee;
+    }
+
     const reference = `biggystone_${randomUUID()}`;
 
     const insertResult = await db.collection("orders").insertOne({
@@ -134,6 +156,10 @@ export async function POST(request: Request) {
       order_items: orderItems,
       discount_code: appliedDiscountCode,
       discount_amount: discountAmount || null,
+      delivery_method: orderType === "retail" ? deliveryMethod ?? null : null,
+      delivery_area: orderType === "retail" ? deliveryArea ?? null : null,
+      delivery_fee: deliveryFee || null,
+      delivery_note: deliveryNote || null,
     });
 
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";

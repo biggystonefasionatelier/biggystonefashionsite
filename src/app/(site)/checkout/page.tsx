@@ -4,11 +4,18 @@ import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useCart } from "@/components/CartContext";
 
+const LOCAL_FEES = { unilag: 1000, bariga: 500, iwaya: 1500 } as const;
+type LocalArea = keyof typeof LOCAL_FEES;
+type DeliveryMethod = "pickup" | "local" | "nationwide";
+
 export default function CheckoutPage() {
   const { items, subtotal } = useCart();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [depositOnly, setDepositOnly] = useState(false);
+  const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>("pickup");
+  const [deliveryArea, setDeliveryArea] = useState<LocalArea>("bariga");
+  const isFridayToday = new Date().getDay() === 5;
 
   if (items.length === 0) {
     return (
@@ -45,6 +52,9 @@ export default function CheckoutPage() {
           orderType,
           depositOnly,
           discountCode: String(form.get("discountCode") ?? ""),
+          deliveryMethod: orderType === "retail" ? deliveryMethod : undefined,
+          deliveryArea: orderType === "retail" && deliveryMethod === "local" ? deliveryArea : undefined,
+          deliveryNote: String(form.get("deliveryNote") ?? ""),
           items: items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
         }),
       });
@@ -137,12 +147,84 @@ export default function CheckoutPage() {
         )}
 
         {orderType === "retail" && (
-          <input
-            name="discountCode"
-            maxLength={50}
-            placeholder="Discount code (optional)"
-            className="rounded-md border border-black/15 px-3 py-2 text-sm uppercase placeholder:normal-case"
-          />
+          <>
+            <input
+              name="discountCode"
+              maxLength={50}
+              placeholder="Discount code (optional)"
+              className="rounded-md border border-black/15 px-3 py-2 text-sm uppercase placeholder:normal-case"
+            />
+
+            <div className="rounded-md border border-black/15 p-3">
+              <p className="text-xs font-medium text-neutral-700">Pickup or delivery?</p>
+              <div className="mt-2 grid gap-2 text-sm">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="deliveryMethodChoice"
+                    checked={deliveryMethod === "pickup"}
+                    onChange={() => setDeliveryMethod("pickup")}
+                  />
+                  Pickup (free)
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="deliveryMethodChoice"
+                    checked={deliveryMethod === "local"}
+                    onChange={() => setDeliveryMethod("local")}
+                  />
+                  Local delivery — Unilag / Bariga / Iwaya & environs
+                </label>
+                {deliveryMethod === "local" && (
+                  <div className="ml-6 grid gap-1">
+                    {(Object.keys(LOCAL_FEES) as LocalArea[]).map((area) => (
+                      <label key={area} className="flex items-center gap-2 text-neutral-600">
+                        <input
+                          type="radio"
+                          name="deliveryAreaChoice"
+                          checked={deliveryArea === area}
+                          onChange={() => setDeliveryArea(area)}
+                        />
+                        <span className="capitalize">{area}</span> — {" "}
+                        {isFridayToday ? (
+                          <span className="text-green-700">Free today (Friday delivery)</span>
+                        ) : (
+                          `₦${LOCAL_FEES[area].toLocaleString()}`
+                        )}
+                      </label>
+                    ))}
+                    <p className="text-xs text-neutral-500">
+                      Local delivery is always free on Fridays.
+                    </p>
+                  </div>
+                )}
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="deliveryMethodChoice"
+                    checked={deliveryMethod === "nationwide"}
+                    onChange={() => setDeliveryMethod("nationwide")}
+                  />
+                  Nationwide shipping
+                </label>
+                {deliveryMethod === "nationwide" && (
+                  <p className="ml-6 text-xs text-neutral-500">
+                    Shipping cost depends on your location — we&apos;ll confirm it with you on
+                    WhatsApp before your order is dispatched.
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <textarea
+              name="deliveryNote"
+              maxLength={500}
+              rows={2}
+              placeholder="Delivery note (optional) — landmark, preferred time, etc."
+              className="rounded-md border border-black/15 px-3 py-2 text-sm"
+            />
+          </>
         )}
 
         <button
