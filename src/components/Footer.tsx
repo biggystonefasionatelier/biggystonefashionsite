@@ -35,6 +35,26 @@ export default function Footer() {
                   Instagram
                 </a>
               </li>
+              <li>
+                <a
+                  href="https://www.facebook.com/profile.php?id=100064942354141"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:underline"
+                >
+                  Facebook
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://vm.tiktok.com/ZS9hPB7PcRA1q-0LZuJ/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:underline"
+                >
+                  TikTok
+                </a>
+              </li>
             </ul>
           </div>
         </div>
