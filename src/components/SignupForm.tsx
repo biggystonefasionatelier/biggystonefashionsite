@@ -9,7 +9,13 @@ const MONTHS = [
   "July", "August", "September", "October", "November", "December",
 ];
 
-export default function SignupForm() {
+export default function SignupForm({
+  compact = false,
+  onSuccess,
+}: {
+  compact?: boolean;
+  onSuccess?: () => void;
+}) {
   const [status, setStatus] = useState<Status>("idle");
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -44,6 +50,7 @@ export default function SignupForm() {
 
       setStatus("success");
       (e.target as HTMLFormElement).reset();
+      onSuccess?.();
     } catch {
       setErrorMsg("Network error. Check your connection and try again.");
       setStatus("error");
@@ -59,7 +66,10 @@ export default function SignupForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:flex-row sm:items-end">
+    <form
+      onSubmit={handleSubmit}
+      className={compact ? "flex flex-col gap-3" : "flex flex-col gap-3 sm:flex-row sm:items-end"}
+    >
       <div className="flex-1">
         <label className="block text-xs text-neutral-500" htmlFor="signup-name">
           Name
