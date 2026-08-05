@@ -27,11 +27,11 @@ export default function AboutPage() {
         his name lives on in every single piece we sell.
       </p>
       <p className="mt-3 text-neutral-700">
-        That&apos;s why, every September, we run discounts and free delivery
-        across the whole site. It isn&apos;t just a sale to us — it&apos;s
-        our way of celebrating him, in the month he was born, every year.
-        When you shop with us in September, you&apos;re part of that
-        celebration too.
+        That&apos;s why, every September, everyone who shops with us gets a
+        discount and free delivery. It isn&apos;t just a sale to us —
+        it&apos;s our way of celebrating him, in the month he was born,
+        every year. When you shop with us in September, you&apos;re part of
+        that celebration too.
       </p>
 
       <h2 className="mt-10 font-bold">
@@ -85,6 +85,14 @@ export default function AboutPage() {
           WhatsApp and get a real reply from a real person.
         </li>
       </ul>
+
+      <p className="mt-10 text-neutral-700">
+        With love,
+        <br />
+        Faith Bolaniran
+        <br />
+        Founder, Biggystone Fashion Atelier
+      </p>
     </div>
   );
 }
