@@ -56,7 +56,7 @@ export default async function HomePage() {
           },
           {
             title: "Fast delivery, real updates",
-            body: "Same-day/next-day pickup for Unilag. Nationwide shipping with a delivery label and WhatsApp updates on every order.",
+            body: "Same-day/next-day pickup for Unilag. Nationwide shipping with WhatsApp updates on every order.",
           },
           {
             title: "New drops monthly",

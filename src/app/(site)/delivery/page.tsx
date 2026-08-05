@@ -20,9 +20,9 @@ export default function DeliveryPage() {
 
       <h2 className="mt-8 font-bold">Delivery</h2>
       <p className="mt-2 text-neutral-700">
-        We deliver anywhere in Nigeria with a delivery label on every order,
-        and we&apos;ll keep you updated on WhatsApp along the way. Pick your
-        area at checkout to see the exact fee.
+        We deliver anywhere in Nigeria, and we&apos;ll keep you updated on
+        WhatsApp along the way. Pick your area at checkout to see the exact
+        fee.
         {promoActive && (
           <>
             {" "}
