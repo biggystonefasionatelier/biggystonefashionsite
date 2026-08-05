@@ -15,13 +15,14 @@ export type CartItem = {
   quantity: number;
   imageUrl?: string;
   orderType: "retail" | "wholesale";
+  color?: string;
 };
 
 type CartContextValue = {
   items: CartItem[];
   addItem: (item: CartItem) => void;
-  removeItem: (productId: string) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
+  removeItem: (productId: string, color?: string) => void;
+  updateQuantity: (productId: string, quantity: number, color?: string) => void;
   clear: () => void;
   subtotal: number;
 };
@@ -29,6 +30,12 @@ type CartContextValue = {
 const CartContext = createContext<CartContextValue | null>(null);
 
 const STORAGE_KEY = "biggystone_cart_v1";
+
+// Different colors of the same product are separate cart lines - a
+// productId match alone isn't enough to treat two lines as "the same item".
+function sameLine(a: { productId: string; color?: string }, b: { productId: string; color?: string }) {
+  return a.productId === b.productId && (a.color ?? "") === (b.color ?? "");
+}
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
@@ -56,29 +63,27 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   function addItem(newItem: CartItem) {
     setItems((prev) => {
-      const existing = prev.find((i) => i.productId === newItem.productId);
+      const existing = prev.find((i) => sameLine(i, newItem));
       if (existing) {
         return prev.map((i) =>
-          i.productId === newItem.productId
-            ? { ...i, quantity: i.quantity + newItem.quantity }
-            : i
+          sameLine(i, newItem) ? { ...i, quantity: i.quantity + newItem.quantity } : i
         );
       }
       return [...prev, newItem];
     });
   }
 
-  function removeItem(productId: string) {
-    setItems((prev) => prev.filter((i) => i.productId !== productId));
+  function removeItem(productId: string, color?: string) {
+    setItems((prev) => prev.filter((i) => !sameLine(i, { productId, color })));
   }
 
-  function updateQuantity(productId: string, quantity: number) {
+  function updateQuantity(productId: string, quantity: number, color?: string) {
     if (quantity <= 0) {
-      removeItem(productId);
+      removeItem(productId, color);
       return;
     }
     setItems((prev) =>
-      prev.map((i) => (i.productId === productId ? { ...i, quantity } : i))
+      prev.map((i) => (sameLine(i, { productId, color }) ? { ...i, quantity } : i))
     );
   }
 

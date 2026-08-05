@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-type OrderItem = { product_name: string; quantity: number; unit_price: number };
+type OrderItem = { product_name: string; quantity: number; unit_price: number; color?: string | null };
 type Order = {
   id: string;
   customer_name: string;
@@ -104,7 +104,8 @@ export default function AdminOrdersPage() {
               <ul className="mt-3 space-y-1 border-t border-black/5 pt-3 text-xs text-neutral-600">
                 {o.order_items.map((item, i) => (
                   <li key={i}>
-                    {item.quantity} × {item.product_name} — ₦
+                    {item.quantity} × {item.product_name}
+                    {item.color && ` (${item.color})`} — ₦
                     {(item.unit_price * item.quantity).toLocaleString()}
                   </li>
                 ))}

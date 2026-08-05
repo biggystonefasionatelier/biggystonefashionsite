@@ -53,6 +53,10 @@ export default function ProductForm({ product }: { product?: Product }) {
       description: String(form.get("description") ?? ""),
       price: Number(form.get("price") ?? 0),
       category: String(form.get("category") ?? ""),
+      colors: String(form.get("colors") ?? "")
+        .split(",")
+        .map((c) => c.trim())
+        .filter(Boolean),
       productType,
       stock: Number(form.get("stock") ?? 0),
       imageUrl,
@@ -171,7 +175,22 @@ export default function ProductForm({ product }: { product?: Product }) {
           <option value="Brooches" />
           <option value="Male Jewelry" />
           <option value="Rings" />
+          <option value="Hair Accessories" />
         </datalist>
+      </div>
+
+      <div>
+        <label className="text-xs text-neutral-500">
+          Colors (optional — comma-separated, e.g. Yellow, Teal, Pink. Leave
+          blank if this listing is only one color. If set, shoppers must pick
+          a color before adding to cart.)
+        </label>
+        <input
+          name="colors"
+          defaultValue={product?.colors?.join(", ") ?? ""}
+          placeholder="e.g. Yellow, Teal, Purple, Pink, Blue"
+          className="mt-1 w-full rounded-md border border-black/15 px-3 py-2 text-sm"
+        />
       </div>
 
       <div>

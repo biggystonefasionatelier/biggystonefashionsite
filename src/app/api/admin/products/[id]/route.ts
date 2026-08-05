@@ -37,6 +37,9 @@ export async function PATCH(
     if (parsed.data.description !== undefined) update.description = parsed.data.description || null;
     if (parsed.data.price !== undefined) update.price = parsed.data.price;
     if (parsed.data.category !== undefined) update.category = parsed.data.category || null;
+    if (parsed.data.colors !== undefined) {
+      update.colors = parsed.data.colors.length > 0 ? parsed.data.colors : null;
+    }
     if (parsed.data.productType !== undefined) update.product_type = parsed.data.productType;
     if (parsed.data.stock !== undefined) update.stock = parsed.data.stock;
     if (parsed.data.imageUrl !== undefined) update.image_url = parsed.data.imageUrl || null;

@@ -50,6 +50,7 @@ export async function POST(request: Request) {
       description: parsed.data.description || null,
       price: parsed.data.price,
       category: parsed.data.category || null,
+      colors: parsed.data.colors && parsed.data.colors.length > 0 ? parsed.data.colors : null,
       product_type: parsed.data.productType,
       stock: parsed.data.stock,
       image_url: parsed.data.imageUrl || null,

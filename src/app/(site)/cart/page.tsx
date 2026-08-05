@@ -23,7 +23,7 @@ export default function CartPage() {
 
       <div className="mt-6 divide-y divide-black/10">
         {items.map((item) => (
-          <div key={item.productId} className="flex items-center gap-4 py-4">
+          <div key={item.productId + (item.color ?? "")} className="flex items-center gap-4 py-4">
             <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-neutral-100">
               {item.imageUrl && (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -32,6 +32,7 @@ export default function CartPage() {
             </div>
             <div className="flex-1">
               <p className="font-medium">{item.name}</p>
+              {item.color && <p className="text-xs text-neutral-500">Color: {item.color}</p>}
               <p className="text-sm text-neutral-500">₦{item.price.toLocaleString()}</p>
               {item.orderType === "wholesale" && (
                 <p className="text-xs text-brand-gold">Pre-order wholesale</p>
@@ -41,11 +42,11 @@ export default function CartPage() {
               type="number"
               min={1}
               value={item.quantity}
-              onChange={(e) => updateQuantity(item.productId, Number(e.target.value))}
+              onChange={(e) => updateQuantity(item.productId, Number(e.target.value), item.color)}
               className="w-16 rounded-md border border-black/15 px-2 py-1 text-sm"
             />
             <button
-              onClick={() => removeItem(item.productId)}
+              onClick={() => removeItem(item.productId, item.color)}
               className="text-xs text-neutral-500 underline"
             >
               Remove

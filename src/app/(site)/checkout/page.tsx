@@ -65,7 +65,7 @@ export default function CheckoutPage() {
           deliveryMethod: orderType === "retail" ? deliveryMethod : undefined,
           deliveryZone: orderType === "retail" && deliveryMethod === "delivery" ? deliveryZone : undefined,
           deliveryNote: String(form.get("deliveryNote") ?? ""),
-          items: items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
+          items: items.map((i) => ({ productId: i.productId, quantity: i.quantity, color: i.color })),
         }),
       });
 

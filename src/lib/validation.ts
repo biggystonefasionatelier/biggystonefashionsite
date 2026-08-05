@@ -30,6 +30,7 @@ export const wholesaleInquirySchema = z.object({
 export const cartItemSchema = z.object({
   productId: z.string().regex(/^[a-f0-9]{24}$/i, "Invalid product ID"),
   quantity: z.number().int().min(1).max(500),
+  color: z.string().trim().max(50).optional().or(z.literal("")),
 });
 
 export const checkoutInitSchema = z.object({
@@ -61,6 +62,7 @@ export const productSchema = z.object({
   description: z.string().trim().max(2000).optional().or(z.literal("")),
   price: z.number().positive(),
   category: z.string().trim().max(100).optional().or(z.literal("")),
+  colors: z.array(z.string().trim().max(50)).max(20).optional(),
   productType: z.enum(["retail", "wholesale"]),
   stock: z.number().int().min(0),
   imageUrl: z.string().url().optional().or(z.literal("")),

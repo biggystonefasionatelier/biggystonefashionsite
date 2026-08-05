@@ -101,6 +101,7 @@ export async function POST(request: Request) {
         product_name: product.name,
         quantity: item.quantity,
         unit_price: product.price,
+        color: item.color || null,
       };
     });
 

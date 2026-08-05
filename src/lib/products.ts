@@ -14,6 +14,7 @@ export type Product = {
   moq: number | null;
   deposit_percent: number | null;
   active: boolean;
+  colors: string[] | null;
 };
 
 export type ProductDoc = {
@@ -30,6 +31,7 @@ export type ProductDoc = {
   deposit_percent: number | null;
   active: boolean;
   created_at: Date;
+  colors?: string[] | null;
 };
 
 export function toProduct(doc: ProductDoc): Product {
@@ -46,6 +48,7 @@ export function toProduct(doc: ProductDoc): Product {
     moq: doc.moq,
     deposit_percent: doc.deposit_percent,
     active: doc.active,
+    colors: doc.colors ?? null,
   };
 }
 

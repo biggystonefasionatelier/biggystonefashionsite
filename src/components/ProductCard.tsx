@@ -7,8 +7,11 @@ import type { Product } from "@/lib/products";
 export default function ProductCard({ product }: { product: Product }) {
   const { addItem } = useCart();
   const [added, setAdded] = useState(false);
+  const hasColors = !!product.colors && product.colors.length > 0;
+  const [color, setColor] = useState(hasColors ? "" : undefined);
 
   function handleAdd() {
+    if (hasColors && !color) return;
     addItem({
       productId: product.id,
       name: product.name,
@@ -16,6 +19,7 @@ export default function ProductCard({ product }: { product: Product }) {
       quantity: 1,
       imageUrl: product.image_url ?? undefined,
       orderType: product.product_type,
+      color: color || undefined,
     });
     setAdded(true);
     setTimeout(() => setAdded(false), 1500);
@@ -41,9 +45,23 @@ export default function ProductCard({ product }: { product: Product }) {
       <p className="text-sm text-neutral-500">
         ₦{product.price.toLocaleString()}
       </p>
+      {hasColors && (
+        <select
+          value={color}
+          onChange={(e) => setColor(e.target.value)}
+          className="mt-2 w-full rounded-md border border-black/15 px-2 py-1.5 text-sm"
+        >
+          <option value="">Choose a color…</option>
+          {product.colors!.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </select>
+      )}
       <button
         onClick={handleAdd}
-        disabled={product.stock <= 0}
+        disabled={product.stock <= 0 || (hasColors && !color)}
         className="mt-2 w-full rounded-full bg-brand-black py-2 text-sm text-brand-gold-light disabled:cursor-not-allowed disabled:bg-neutral-300 disabled:text-neutral-500"
       >
         {product.stock <= 0 ? "Out of stock" : added ? "Added ✓" : "Add to cart"}
