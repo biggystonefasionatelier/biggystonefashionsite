@@ -176,6 +176,7 @@ export default function ProductForm({ product }: { product?: Product }) {
           <option value="Male Jewelry" />
           <option value="Rings" />
           <option value="Hair Accessories" />
+          <option value="Sets" />
         </datalist>
       </div>
 
