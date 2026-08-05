@@ -30,7 +30,7 @@ function deliveryLabel(o: Order): string | null {
   if (!o.delivery_method) return null;
   if (o.delivery_method === "pickup") return "Pickup";
   const zone = o.delivery_zone_label ?? "Delivery";
-  const fee = o.delivery_fee ? `₦${o.delivery_fee.toLocaleString()}` : "Free (Friday)";
+  const fee = o.delivery_fee ? `₦${o.delivery_fee.toLocaleString()}` : "Free (September promo)";
   return `${zone} (${fee})`;
 }
 

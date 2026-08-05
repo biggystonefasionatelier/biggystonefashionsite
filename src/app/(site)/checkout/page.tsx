@@ -3,11 +3,20 @@
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useCart } from "@/components/CartContext";
-import { DELIVERY_ZONES } from "@/lib/delivery";
+import { DELIVERY_ZONES, type DeliveryZone } from "@/lib/delivery";
 
 type DeliveryMethod = "pickup" | "delivery";
 
 const ZONE_GROUPS = ["Lagos Mainland", "Lagos Island", "Outside Lagos"] as const;
+
+// Leads with actual place names instead of the internal "Island 1" /
+// "Mainland 3" labels, which look identical to customers with no way to
+// tell which one matches where they live.
+function zoneOptionLabel(zone: DeliveryZone): string {
+  const preview = zone.areas.slice(0, 3).join(", ");
+  const extra = zone.areas.length > 3 ? ` +${zone.areas.length - 3} more` : "";
+  return `${preview}${extra} — ₦${zone.fee.toLocaleString()} (${zone.eta})`;
+}
 
 export default function CheckoutPage() {
   const { items, subtotal } = useCart();
@@ -16,7 +25,6 @@ export default function CheckoutPage() {
   const [depositOnly, setDepositOnly] = useState(false);
   const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>("pickup");
   const [deliveryZone, setDeliveryZone] = useState(DELIVERY_ZONES[0].id);
-  const isFridayToday = new Date().getDay() === 5;
   const selectedZone = DELIVERY_ZONES.find((z) => z.id === deliveryZone);
 
   if (items.length === 0) {
@@ -190,7 +198,7 @@ export default function CheckoutPage() {
                         <optgroup key={group} label={group}>
                           {DELIVERY_ZONES.filter((z) => z.group === group).map((z) => (
                             <option key={z.id} value={z.id}>
-                              {z.label} — ₦{z.fee.toLocaleString()} ({z.eta})
+                              {zoneOptionLabel(z)}
                             </option>
                           ))}
                         </optgroup>
@@ -201,15 +209,6 @@ export default function CheckoutPage() {
                         Covers: {selectedZone.areas.join(", ")}
                       </p>
                     )}
-                    <p className="text-xs">
-                      {isFridayToday ? (
-                        <span className="font-medium text-green-700">
-                          Free today — every delivery is free on Fridays!
-                        </span>
-                      ) : (
-                        <span className="text-neutral-500">Delivery is always free on Fridays.</span>
-                      )}
-                    </p>
                   </div>
                 )}
               </div>

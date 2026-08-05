@@ -12,8 +12,8 @@ export default function AboutPage() {
       </p>
       <p className="mt-4 text-neutral-700">
         We&apos;re based in Bariga, Lagos, close to Unilag — same-day pickup
-        and delivery for campus, and nationwide shipping with a tracked
-        delivery label for everyone else.
+        and delivery for campus, and nationwide shipping with a delivery
+        label and WhatsApp updates for everyone else.
       </p>
       <p className="mt-4 text-neutral-700">
         New pieces drop every month, picked to match what&apos;s actually

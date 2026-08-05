@@ -1,10 +1,13 @@
 import { DELIVERY_ZONES } from "@/lib/delivery";
+import { PROMO, isPromoActive } from "@/lib/promo";
 
 export const metadata = { title: "Delivery & Returns | Biggystone Fashion Atelier" };
 
 const GROUPS = ["Lagos Mainland", "Lagos Island", "Outside Lagos"] as const;
 
 export default function DeliveryPage() {
+  const promoActive = isPromoActive();
+
   return (
     <div className="mx-auto max-w-3xl px-4 py-12">
       <h1 className="text-2xl font-bold">Delivery & Returns</h1>
@@ -17,9 +20,19 @@ export default function DeliveryPage() {
 
       <h2 className="mt-8 font-bold">Delivery</h2>
       <p className="mt-2 text-neutral-700">
-        We deliver anywhere in Nigeria with a tracked delivery label on every
-        order. Pick your area at checkout to see the exact fee — and{" "}
-        <strong>delivery is free for everyone, everywhere, every Friday</strong>.
+        We deliver anywhere in Nigeria with a delivery label on every order,
+        and we&apos;ll keep you updated on WhatsApp along the way. Pick your
+        area at checkout to see the exact fee.
+        {promoActive && (
+          <>
+            {" "}
+            <strong>
+              Free delivery on any order ₦{PROMO.freeDeliveryThreshold.toLocaleString()} and
+              above
+            </strong>{" "}
+            for the rest of September.
+          </>
+        )}
       </p>
 
       {GROUPS.map((group) => (

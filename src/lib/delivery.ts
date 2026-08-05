@@ -146,22 +146,13 @@ export function findDeliveryZone(zoneId: string | undefined): DeliveryZone | und
   return DELIVERY_ZONES.find((z) => z.id === zoneId);
 }
 
-function isFridayInLagos(at: Date): boolean {
-  const weekday = new Intl.DateTimeFormat("en-US", { timeZone: "Africa/Lagos", weekday: "short" }).format(at);
-  return weekday === "Fri";
-}
-
 /**
- * Pickup is always free. Delivery is priced by zone (see DELIVERY_ZONES),
- * except delivery is free for everyone, in every zone, on Fridays - a
- * site-wide promo, not tied to any specific area.
+ * Pickup is always free. Delivery is priced by zone (see DELIVERY_ZONES).
+ * No standing Friday promo anymore - the only current free-delivery rule
+ * is the September launch promo (orders ≥ PROMO.freeDeliveryThreshold),
+ * applied separately in the checkout route since it's time-boxed.
  */
-export function calculateDeliveryFee(
-  method: DeliveryMethod,
-  zoneId: string | undefined,
-  at: Date = new Date()
-): number {
+export function calculateDeliveryFee(method: DeliveryMethod, zoneId: string | undefined): number {
   if (method !== "delivery") return 0;
-  if (isFridayInLagos(at)) return 0;
   return findDeliveryZone(zoneId)?.fee ?? 0;
 }

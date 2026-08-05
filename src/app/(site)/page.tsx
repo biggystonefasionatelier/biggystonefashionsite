@@ -55,8 +55,8 @@ export default async function HomePage() {
             body: "Pearl, crystal, and statement pieces that look far more expensive than they cost. Most under ₦5,000.",
           },
           {
-            title: "Fast, tracked delivery",
-            body: "Same-day/next-day pickup for Unilag. Nationwide shipping with a tracked delivery label on every order.",
+            title: "Fast delivery, real updates",
+            body: "Same-day/next-day pickup for Unilag. Nationwide shipping with a delivery label and WhatsApp updates on every order.",
           },
           {
             title: "New drops monthly",

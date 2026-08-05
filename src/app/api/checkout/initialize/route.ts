@@ -142,9 +142,8 @@ export async function POST(request: Request) {
       amountDue -= discountAmount;
     }
 
-    // Delivery is priced by zone (see src/lib/delivery.ts); free for
-    // everyone, in every zone, on Fridays - and free during the
-    // September promo for any order worth PROMO.freeDeliveryThreshold
+    // Delivery is priced by zone (see src/lib/delivery.ts) - free only
+    // during the September promo, for orders worth PROMO.freeDeliveryThreshold
     // or more (based on the item subtotal, before any discount).
     let deliveryFee = 0;
     const zone = findDeliveryZone(deliveryZone);

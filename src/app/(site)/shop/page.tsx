@@ -14,7 +14,7 @@ export default async function ShopPage() {
       <h1 className="text-2xl font-bold">Shop</h1>
       <p className="mt-2 text-sm text-neutral-600">
         In-stock pieces — order today, ships same-day/next-day for Unilag,
-        or nationwide with a tracked delivery label.
+        or nationwide with delivery updates on WhatsApp.
       </p>
 
       {products.length === 0 ? (
