@@ -51,6 +51,11 @@ async function run() {
     );
   }
 
+  // Gift-picker vouchers for the two non-physical gift slots ("₦X off
+  // next order" / "free delivery next order") - see src/lib/giftVoucher.ts.
+  await db.collection("gift_vouchers").createIndex({ code: 1 }, { unique: true });
+  await db.collection("gift_vouchers").createIndex({ email: 1 });
+
   console.log("Indexes created. Your database is ready.");
 }
 

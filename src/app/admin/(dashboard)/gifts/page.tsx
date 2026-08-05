@@ -2,18 +2,24 @@
 
 import { useEffect, useState } from "react";
 
+type VoucherType = "none" | "fixed_discount" | "free_delivery";
+
 type Gift = {
   id: string;
   number: number;
   name: string;
   description: string;
   image_url: string | null;
+  voucher_type?: VoucherType;
+  voucher_amount?: number | null;
 };
 
 function GiftRow({ gift, onSaved }: { gift: Gift; onSaved: (gift: Gift) => void }) {
   const [name, setName] = useState(gift.name);
   const [description, setDescription] = useState(gift.description);
   const [imageUrl, setImageUrl] = useState(gift.image_url ?? "");
+  const [voucherType, setVoucherType] = useState<VoucherType>(gift.voucher_type ?? "none");
+  const [voucherAmount, setVoucherAmount] = useState(gift.voucher_amount?.toString() ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -25,7 +31,13 @@ function GiftRow({ gift, onSaved }: { gift: Gift; onSaved: (gift: Gift) => void 
       const res = await fetch(`/api/admin/gifts/${gift.number}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, description, imageUrl }),
+        body: JSON.stringify({
+          name,
+          description,
+          imageUrl,
+          voucherType,
+          voucherAmount: voucherAmount ? Number(voucherAmount) : undefined,
+        }),
       });
       const data = await res.json();
 
@@ -74,6 +86,42 @@ function GiftRow({ gift, onSaved }: { gift: Gift; onSaved: (gift: Gift) => void 
           className="mt-1 w-full rounded-md border border-black/15 px-3 py-2 text-sm"
         />
       </div>
+      <div className="mt-3 grid gap-2 sm:grid-cols-2">
+        <div>
+          <label className="text-xs text-neutral-500">
+            What happens when someone wins this
+          </label>
+          <select
+            value={voucherType}
+            onChange={(e) => setVoucherType(e.target.value as VoucherType)}
+            className="mt-1 w-full rounded-md border border-black/15 px-3 py-2 text-sm"
+          >
+            <option value="none">A physical item — I&apos;ll pack it with the order</option>
+            <option value="fixed_discount">A ₦ amount off their next order (auto code)</option>
+            <option value="free_delivery">Free delivery on their next order (auto code)</option>
+          </select>
+        </div>
+        {voucherType === "fixed_discount" && (
+          <div>
+            <label className="text-xs text-neutral-500">Discount amount (₦)</label>
+            <input
+              type="number"
+              value={voucherAmount}
+              onChange={(e) => setVoucherAmount(e.target.value)}
+              placeholder="5000"
+              className="mt-1 w-full rounded-md border border-black/15 px-3 py-2 text-sm"
+            />
+          </div>
+        )}
+      </div>
+      {voucherType !== "none" && (
+        <p className="mt-2 text-xs text-neutral-500">
+          The customer gets a one-time code right after they pick this
+          number (shown on screen and emailed to them), for use at checkout
+          on a future order. This order itself isn&apos;t affected.
+        </p>
+      )}
+
       <div className="mt-3 flex items-center gap-3">
         <button
           onClick={handleSave}

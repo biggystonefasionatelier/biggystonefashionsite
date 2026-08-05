@@ -131,6 +131,67 @@ export async function sendAdminNotification(subject: string, htmlContent: string
   }
 }
 
+/**
+ * Emails the customer directly (not Faith) - used so a gift voucher code
+ * isn't lost if they close the confirmation page without noting it down.
+ * Best-effort: the code is already shown on screen when this is called, so
+ * a failed email here shouldn't block anything.
+ */
+async function sendCustomerEmail(to: string, subject: string, htmlContent: string): Promise<void> {
+  const apiKey = process.env.BREVO_API_KEY;
+  const senderEmail = process.env.ADMIN_NOTIFICATION_EMAIL;
+
+  if (!apiKey || !senderEmail) {
+    console.warn("Brevo/ADMIN_NOTIFICATION_EMAIL not configured - skipping customer email");
+    return;
+  }
+
+  const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: {
+      "api-key": apiKey,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify({
+      sender: { name: "Biggystone Fashion Atelier", email: senderEmail },
+      to: [{ email: to }],
+      subject,
+      htmlContent,
+    }),
+  });
+
+  if (res.status !== 201) {
+    const body = await res.text();
+    console.error("Customer email failed:", res.status, body);
+  }
+}
+
+export async function sendGiftVoucherEmail(params: {
+  email: string;
+  customerName: string;
+  code: string;
+  giftName: string;
+  type: "fixed_discount" | "free_delivery";
+  amount: number | null;
+}): Promise<void> {
+  const rewardLine =
+    params.type === "fixed_discount"
+      ? `₦${(params.amount ?? 0).toLocaleString()} off your next order`
+      : "free delivery on your next order";
+
+  await sendCustomerEmail(
+    params.email,
+    `Your Biggystone gift code — ${params.giftName}`,
+    `<p>Hi ${params.customerName},</p>
+     <p>Thank you for being a loyal customer! You picked <strong>${params.giftName}</strong> —
+     that's ${rewardLine}.</p>
+     <p>Your one-time code: <strong style="font-size:18px;letter-spacing:1px;">${params.code}</strong></p>
+     <p>Enter this code at checkout (discount code field) whenever you're ready to use it.</p>
+     <p>With love,<br>Faith, Founder — Biggystone Fashion Atelier</p>`
+  );
+}
+
 export async function notifyOrderPaid(order: {
   customer_name: string;
   email: string;

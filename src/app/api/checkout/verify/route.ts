@@ -3,7 +3,8 @@ import { ObjectId } from "mongodb";
 import { getDb } from "@/lib/mongodb";
 import { verifyTransaction } from "@/lib/paystack";
 import { markGiftEligibilityIfQualifying } from "@/lib/loyalty";
-import { markBirthdayDiscountUsed } from "@/lib/discount";
+import { BIRTHDAY_DISCOUNT_CODE, markBirthdayDiscountUsed } from "@/lib/discount";
+import { markGiftVoucherUsed } from "@/lib/giftVoucher";
 import { markBrevoBirthdayDiscountUsed, notifyOrderPaid } from "@/lib/brevo";
 
 type OrderItemDoc = { product_id: string; product_name: string; quantity: number; unit_price: number };
@@ -22,6 +23,7 @@ type OrderDoc = {
   gift_name?: string;
   discount_code?: string | null;
   discount_amount?: number | null;
+  gift_voucher_code?: string | null;
 };
 
 /**
@@ -83,9 +85,11 @@ export async function GET(request: Request) {
 
     await markGiftEligibilityIfQualifying(db, order._id, order.email, order.order_type, order.total);
 
-    if (order.discount_code) {
+    if (order.discount_code === BIRTHDAY_DISCOUNT_CODE) {
       await markBirthdayDiscountUsed(db, order.email);
       await markBrevoBirthdayDiscountUsed(order.email);
+    } else if (order.gift_voucher_code) {
+      await markGiftVoucherUsed(db, order.gift_voucher_code, order._id);
     }
 
     await notifyOrderPaid(order);

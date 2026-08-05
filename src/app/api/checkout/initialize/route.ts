@@ -11,6 +11,7 @@ import {
   checkBirthdayDiscountEligibility,
   discountIneligibilityMessage,
 } from "@/lib/discount";
+import { checkGiftVoucherEligibility, giftVoucherIneligibilityMessage } from "@/lib/giftVoucher";
 import { calculateDeliveryFee, findDeliveryZone, type DeliveryMethod } from "@/lib/delivery";
 import { PROMO, isPromoActive } from "@/lib/promo";
 
@@ -119,12 +120,16 @@ export async function POST(request: Request) {
       amountDue = Math.round((total * depositPercent) / 100);
     }
 
-    // Two possible retail discount codes: the September launch promo
-    // (BSTONESEPT - date-gated only, open to anyone) or the birthday
-    // code (BSTONEBDAY - checked against the customer's signup record,
-    // see src/lib/discount.ts). At most one applies per order.
+    // Three possible retail discount codes: the September launch promo
+    // (BSTONESEPT - date-gated, open to anyone), the birthday code
+    // (BSTONEBDAY - checked against the customer's signup record, see
+    // src/lib/discount.ts), or a one-time gift voucher code (GIFT-xxxx,
+    // earned by picking a non-physical loyalty gift - see
+    // src/lib/giftVoucher.ts). At most one applies per order.
     let discountAmount = 0;
     let appliedDiscountCode: string | null = null;
+    let appliedGiftVoucherCode: string | null = null;
+    let freeDeliveryFromVoucher = false;
     if (orderType === "retail" && discountCode) {
       const code = discountCode.trim().toUpperCase();
       if (code === PROMO.code) {
@@ -133,6 +138,21 @@ export async function POST(request: Request) {
         }
         discountAmount = Math.round((amountDue * PROMO.percent) / 100);
         appliedDiscountCode = code;
+      } else if (code.startsWith("GIFT-")) {
+        const eligibility = await checkGiftVoucherEligibility(db, email, code);
+        if (!eligibility.eligible) {
+          return NextResponse.json(
+            { error: giftVoucherIneligibilityMessage(eligibility.reason) },
+            { status: 400 }
+          );
+        }
+        if (eligibility.voucher.type === "fixed_discount") {
+          discountAmount = Math.min(amountDue, eligibility.voucher.amount ?? 0);
+        } else {
+          freeDeliveryFromVoucher = true;
+        }
+        appliedDiscountCode = code;
+        appliedGiftVoucherCode = code;
       } else {
         const eligibility = await checkBirthdayDiscountEligibility(db, email, discountCode);
         if (!eligibility.eligible) {
@@ -144,17 +164,28 @@ export async function POST(request: Request) {
       amountDue -= discountAmount;
     }
 
-    // Delivery is priced by zone (see src/lib/delivery.ts) - free only
-    // during the September promo, for orders worth PROMO.freeDeliveryThreshold
-    // or more (based on the item subtotal, before any discount).
+    // Delivery is priced by zone (see src/lib/delivery.ts) - free during
+    // the September promo for orders worth PROMO.freeDeliveryThreshold or
+    // more (based on the item subtotal, before any discount), or if a
+    // free-delivery gift voucher was applied above.
     let deliveryFee = 0;
     const zone = findDeliveryZone(deliveryZone);
     if (orderType === "retail" && deliveryMethod) {
       deliveryFee = calculateDeliveryFee(deliveryMethod as DeliveryMethod, deliveryZone);
-      if (isPromoActive() && total >= PROMO.freeDeliveryThreshold) {
+      if (freeDeliveryFromVoucher || (isPromoActive() && total >= PROMO.freeDeliveryThreshold)) {
         deliveryFee = 0;
       }
       amountDue += deliveryFee;
+    }
+
+    // A fixed-discount gift voucher can't reduce a small order below zero
+    // (it's capped above), but it can bring the total to exactly zero,
+    // which Paystack can't process as a charge.
+    if (amountDue <= 0) {
+      return NextResponse.json(
+        { error: "Your order total is ₦0 after this discount. Please add another item to your cart to check out." },
+        { status: 400 }
+      );
     }
 
     const reference = `biggystone_${randomUUID()}`;
@@ -174,6 +205,7 @@ export async function POST(request: Request) {
       order_items: orderItems,
       discount_code: appliedDiscountCode,
       discount_amount: discountAmount || null,
+      gift_voucher_code: appliedGiftVoucherCode,
       delivery_method: orderType === "retail" ? deliveryMethod ?? null : null,
       delivery_zone: orderType === "retail" ? deliveryZone || null : null,
       delivery_zone_label: orderType === "retail" ? zone?.label ?? null : null,

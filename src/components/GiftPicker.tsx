@@ -10,6 +10,7 @@ export default function GiftPicker({ reference }: { reference: string }) {
   const [gift, setGift] = useState<{ number: number; name: string; description: string } | null>(
     null
   );
+  const [voucherCode, setVoucherCode] = useState<string | null>(null);
 
   async function pick(number: number) {
     setPicking(true);
@@ -30,6 +31,7 @@ export default function GiftPicker({ reference }: { reference: string }) {
       }
 
       setGift(data.gift);
+      setVoucherCode(data.voucherCode ?? null);
     } catch {
       setError("Network error. Please try again.");
       setPicking(false);
@@ -46,9 +48,21 @@ export default function GiftPicker({ reference }: { reference: string }) {
             {gift.description && (
               <p className="mt-2 text-sm text-neutral-600">{gift.description}</p>
             )}
-            <p className="mt-4 text-xs text-neutral-500">
-              This will be included with your order. Thank you for being a loyal customer!
-            </p>
+            {voucherCode ? (
+              <div className="mt-4 rounded-lg border border-brand-gold/60 bg-brand-gold/10 p-3">
+                <p className="text-xs text-neutral-600">
+                  Your one-time code — enter this at checkout on a future order:
+                </p>
+                <p className="mt-1 text-lg font-bold tracking-wide">{voucherCode}</p>
+                <p className="mt-1 text-xs text-neutral-500">
+                  We&apos;ve also emailed this to you so it isn&apos;t lost.
+                </p>
+              </div>
+            ) : (
+              <p className="mt-4 text-xs text-neutral-500">
+                This will be included with your order. Thank you for being a loyal customer!
+              </p>
+            )}
           </>
         ) : (
           <>

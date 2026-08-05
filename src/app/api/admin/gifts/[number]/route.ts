@@ -6,6 +6,8 @@ const updateSchema = z.object({
   name: z.string().trim().min(1).max(200),
   description: z.string().trim().max(2000).optional().or(z.literal("")),
   imageUrl: z.string().url().optional().or(z.literal("")),
+  voucherType: z.enum(["none", "fixed_discount", "free_delivery"]).default("none"),
+  voucherAmount: z.number().positive().optional(),
 });
 
 export async function PATCH(
@@ -43,6 +45,8 @@ export async function PATCH(
           name: parsed.data.name,
           description: parsed.data.description || "",
           image_url: parsed.data.imageUrl || null,
+          voucher_type: parsed.data.voucherType,
+          voucher_amount: parsed.data.voucherType === "fixed_discount" ? parsed.data.voucherAmount ?? null : null,
         },
       },
       { returnDocument: "after" }

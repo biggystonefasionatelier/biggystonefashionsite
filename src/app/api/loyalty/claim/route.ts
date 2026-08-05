@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { claimGiftSchema } from "@/lib/validation";
 import { getDb } from "@/lib/mongodb";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
+import { createGiftVoucher, type VoucherType } from "@/lib/giftVoucher";
+import { sendGiftVoucherEmail } from "@/lib/brevo";
 
 /**
  * Called from the gift-picker popup on /checkout/success once an order is
@@ -42,7 +44,13 @@ export async function POST(request: Request) {
   try {
     const db = await getDb();
 
-    const gift = await db.collection("gifts").findOne({ number: giftNumber });
+    const gift = await db.collection<{
+      number: number;
+      name: string;
+      description: string;
+      voucher_type?: VoucherType | "none";
+      voucher_amount?: number | null;
+    }>("gifts").findOne({ number: giftNumber });
     if (!gift) {
       return NextResponse.json({ error: "That gift number doesn't exist" }, { status: 400 });
     }
@@ -60,7 +68,30 @@ export async function POST(request: Request) {
       );
     }
 
-    return NextResponse.json({ gift: { number: gift.number, name: gift.name, description: gift.description } });
+    let voucherCode: string | null = null;
+    if (gift.voucher_type === "fixed_discount" || gift.voucher_type === "free_delivery") {
+      voucherCode = await createGiftVoucher(db, {
+        email: result.email,
+        type: gift.voucher_type,
+        amount: gift.voucher_type === "fixed_discount" ? gift.voucher_amount ?? null : null,
+        giftNumber,
+        sourceOrderId: result._id,
+      });
+
+      await sendGiftVoucherEmail({
+        email: result.email,
+        customerName: result.customer_name,
+        code: voucherCode,
+        giftName: gift.name,
+        type: gift.voucher_type,
+        amount: gift.voucher_amount ?? null,
+      });
+    }
+
+    return NextResponse.json({
+      gift: { number: gift.number, name: gift.name, description: gift.description },
+      voucherCode,
+    });
   } catch (err) {
     console.error("Gift claim failed:", err);
     return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 });

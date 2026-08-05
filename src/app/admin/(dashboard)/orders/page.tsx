@@ -36,7 +36,7 @@ function deliveryLabel(o: Order): string | null {
   if (!o.delivery_method) return null;
   if (o.delivery_method === "pickup") return "Pickup";
   const zone = o.delivery_zone_label ?? "Delivery";
-  const fee = o.delivery_fee ? `₦${o.delivery_fee.toLocaleString()}` : "Free (September promo)";
+  const fee = o.delivery_fee ? `₦${o.delivery_fee.toLocaleString()}` : "Free";
   return `${zone} (${fee})`;
 }
 
@@ -134,7 +134,10 @@ export default function AdminOrdersPage() {
 
               {o.discount_code && (
                 <p className="mt-2 border-t border-black/5 pt-2 text-xs text-neutral-600">
-                  🏷️ Discount code {o.discount_code} applied — ₦{Number(o.discount_amount).toLocaleString()} off
+                  {o.discount_code.startsWith("GIFT-") ? "🎁" : "🏷️"} Code {o.discount_code} applied
+                  {o.discount_amount
+                    ? ` — ₦${Number(o.discount_amount).toLocaleString()} off`
+                    : " — free delivery on this order"}
                 </p>
               )}
 
