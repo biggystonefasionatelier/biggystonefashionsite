@@ -2,7 +2,13 @@
 
 import { useEffect, useState } from "react";
 
-type OrderItem = { product_name: string; quantity: number; unit_price: number; color?: string | null };
+type OrderItem = {
+  product_name: string;
+  quantity: number;
+  unit_price: number;
+  color?: string | null;
+  image_url?: string | null;
+};
 type Order = {
   id: string;
   customer_name: string;
@@ -101,12 +107,20 @@ export default function AdminOrdersPage() {
                 </div>
               </div>
 
-              <ul className="mt-3 space-y-1 border-t border-black/5 pt-3 text-xs text-neutral-600">
+              <ul className="mt-3 space-y-2 border-t border-black/5 pt-3 text-xs text-neutral-600">
                 {o.order_items.map((item, i) => (
-                  <li key={i}>
-                    {item.quantity} × {item.product_name}
-                    {item.color && ` (${item.color})`} — ₦
-                    {(item.unit_price * item.quantity).toLocaleString()}
+                  <li key={i} className="flex items-center gap-2">
+                    <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-md bg-neutral-100">
+                      {item.image_url && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={item.image_url} alt="" className="h-full w-full object-cover" />
+                      )}
+                    </div>
+                    <span>
+                      {item.quantity} × {item.product_name}
+                      {item.color && ` (${item.color})`} — ₦
+                      {(item.unit_price * item.quantity).toLocaleString()}
+                    </span>
                   </li>
                 ))}
               </ul>

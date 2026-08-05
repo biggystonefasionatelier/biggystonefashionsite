@@ -102,6 +102,7 @@ export async function POST(request: Request) {
         quantity: item.quantity,
         unit_price: product.price,
         color: item.color || null,
+        image_url: product.image_url || null,
       };
     });
 
