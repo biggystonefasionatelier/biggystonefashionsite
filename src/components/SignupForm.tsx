@@ -60,7 +60,7 @@ export default function SignupForm({
   if (status === "success") {
     return (
       <p className="rounded-lg bg-brand-gold-light/40 p-4 text-sm text-neutral-800">
-        You&apos;re on the list — watch your inbox for the September discount code.
+        You&apos;re on the list — watch your inbox for new drops and your birthday surprise.
       </p>
     );
   }

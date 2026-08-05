@@ -1,5 +1,5 @@
 import { getProducts } from "@/lib/products";
-import ProductCard from "@/components/ProductCard";
+import ShopBrowser from "@/components/ShopBrowser";
 
 export const metadata = { title: "Shop | Biggystone Fashion Atelier" };
 // New/edited products in the admin dashboard should show up without a
@@ -23,11 +23,7 @@ export default async function ShopPage() {
           Instagram for the first look.
         </p>
       ) : (
-        <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-          {products.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
+        <ShopBrowser products={products} />
       )}
     </div>
   );

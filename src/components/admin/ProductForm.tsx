@@ -154,12 +154,24 @@ export default function ProductForm({ product }: { product?: Product }) {
       </div>
 
       <div>
-        <label className="text-xs text-neutral-500">Category (optional)</label>
+        <label className="text-xs text-neutral-500">
+          Category (optional — used as a tag on the shop page, so keep spelling consistent)
+        </label>
         <input
           name="category"
+          list="category-suggestions"
           defaultValue={product?.category ?? ""}
+          placeholder="e.g. Earrings"
           className="mt-1 w-full rounded-md border border-black/15 px-3 py-2 text-sm"
         />
+        <datalist id="category-suggestions">
+          <option value="Earrings" />
+          <option value="Neckpieces" />
+          <option value="Bracelets" />
+          <option value="Brooches" />
+          <option value="Male Jewelry" />
+          <option value="Rings" />
+        </datalist>
       </div>
 
       <div>

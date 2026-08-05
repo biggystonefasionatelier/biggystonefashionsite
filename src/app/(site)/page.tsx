@@ -2,11 +2,14 @@ import Link from "next/link";
 import { getProducts } from "@/lib/products";
 import ProductCard from "@/components/ProductCard";
 import SignupForm from "@/components/SignupForm";
+import { PROMO, isPromoActive, promoDaysRemaining } from "@/lib/promo";
 
 export const revalidate = 60;
 
 export default async function HomePage() {
   const featured = await getProducts("retail", 8);
+  const promoActive = isPromoActive();
+  const daysLeft = promoDaysRemaining();
 
   return (
     <div>
@@ -16,15 +19,16 @@ export default async function HomePage() {
           Luxury-look jewelry. Real prices.
         </h1>
         <p className="mx-auto mt-4 max-w-xl text-brand-gold">
-          New pieces every month, from ₦1,000 — and this September, launch
-          pricing on everything.
+          {promoActive
+            ? `New pieces every month, from ₦1,000 — and right now, ${PROMO.percent}% off everything.`
+            : "New pieces every month, from ₦1,000."}
         </p>
         <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
           <Link
             href="/shop"
             className="rounded-full bg-brand-gold px-6 py-3 text-sm font-medium text-brand-black"
           >
-            Shop the September Sale
+            {promoActive ? "Shop the September Sale" : "Shop now"}
           </Link>
           <Link href="/delivery" className="text-sm underline underline-offset-4">
             Unilag? Pick up same-day →
@@ -33,10 +37,15 @@ export default async function HomePage() {
       </section>
 
       {/* Discount banner */}
-      <section className="bg-brand-gold-light px-4 py-4 text-center text-sm text-neutral-800">
-        <strong>September Sale — launch pricing, all month.</strong> Ends
-        September 30.
-      </section>
+      {promoActive && (
+        <section className="bg-brand-gold-light px-4 py-4 text-center text-sm text-neutral-800">
+          <strong>
+            September Sale — {PROMO.percent}% off with code {PROMO.code}.
+          </strong>{" "}
+          Free delivery on orders ₦{PROMO.freeDeliveryThreshold.toLocaleString()}+. Ends in{" "}
+          {daysLeft} {daysLeft === 1 ? "day" : "days"}.
+        </section>
+      )}
 
       {/* Value props */}
       <section className="mx-auto grid max-w-6xl gap-6 px-4 py-14 sm:grid-cols-2 lg:grid-cols-4">
@@ -93,8 +102,8 @@ export default async function HomePage() {
           <h2 className="text-xl font-bold">Get first access — and a birthday gift</h2>
           <p className="mt-2 text-sm text-neutral-600">
             Drop your email and birthday. You&apos;ll get the first look at new
-            drops, September&apos;s discount code, and something extra the week
-            of your birthday.
+            drops{promoActive ? ", this month's discount code," : ""} and something extra the
+            week of your birthday.
           </p>
           <div className="mt-6">
             <SignupForm />
@@ -120,8 +129,9 @@ export default async function HomePage() {
       <section className="bg-brand-black px-4 py-14 text-center text-brand-gold-light">
         <h2 className="text-xl font-bold">Ready to shop?</h2>
         <p className="mt-2 text-sm text-brand-gold">
-          September&apos;s discount won&apos;t last. Neither will the pieces
-          everyone&apos;s already asking about.
+          {promoActive
+            ? "September's discount won't last. Neither will the pieces everyone's already asking about."
+            : "The pieces everyone's already asking about won't last."}
         </p>
         <Link
           href="/shop"

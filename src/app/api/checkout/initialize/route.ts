@@ -12,6 +12,7 @@ import {
   discountIneligibilityMessage,
 } from "@/lib/discount";
 import { calculateDeliveryFee, findDeliveryZone, type DeliveryMethod } from "@/lib/delivery";
+import { PROMO, isPromoActive } from "@/lib/promo";
 
 export async function POST(request: Request) {
   const ip = getClientIp(request);
@@ -116,26 +117,42 @@ export async function POST(request: Request) {
       amountDue = Math.round((total * depositPercent) / 100);
     }
 
-    // Birthday discount: retail only, one shared code, eligibility checked
-    // against the customer's signup record (see src/lib/discount.ts).
+    // Two possible retail discount codes: the September launch promo
+    // (BSTONESEPT - date-gated only, open to anyone) or the birthday
+    // code (BSTONEBDAY - checked against the customer's signup record,
+    // see src/lib/discount.ts). At most one applies per order.
     let discountAmount = 0;
     let appliedDiscountCode: string | null = null;
     if (orderType === "retail" && discountCode) {
-      const eligibility = await checkBirthdayDiscountEligibility(db, email, discountCode);
-      if (!eligibility.eligible) {
-        return NextResponse.json({ error: discountIneligibilityMessage(eligibility.reason) }, { status: 400 });
+      const code = discountCode.trim().toUpperCase();
+      if (code === PROMO.code) {
+        if (!isPromoActive()) {
+          return NextResponse.json({ error: "That code isn't active right now." }, { status: 400 });
+        }
+        discountAmount = Math.round((amountDue * PROMO.percent) / 100);
+        appliedDiscountCode = code;
+      } else {
+        const eligibility = await checkBirthdayDiscountEligibility(db, email, discountCode);
+        if (!eligibility.eligible) {
+          return NextResponse.json({ error: discountIneligibilityMessage(eligibility.reason) }, { status: 400 });
+        }
+        discountAmount = Math.round((amountDue * BIRTHDAY_DISCOUNT_PERCENT) / 100);
+        appliedDiscountCode = code;
       }
-      discountAmount = Math.round((amountDue * BIRTHDAY_DISCOUNT_PERCENT) / 100);
       amountDue -= discountAmount;
-      appliedDiscountCode = discountCode.trim().toUpperCase();
     }
 
     // Delivery is priced by zone (see src/lib/delivery.ts); free for
-    // everyone, in every zone, on Fridays.
+    // everyone, in every zone, on Fridays - and free during the
+    // September promo for any order worth PROMO.freeDeliveryThreshold
+    // or more (based on the item subtotal, before any discount).
     let deliveryFee = 0;
     const zone = findDeliveryZone(deliveryZone);
     if (orderType === "retail" && deliveryMethod) {
       deliveryFee = calculateDeliveryFee(deliveryMethod as DeliveryMethod, deliveryZone);
+      if (isPromoActive() && total >= PROMO.freeDeliveryThreshold) {
+        deliveryFee = 0;
+      }
       amountDue += deliveryFee;
     }
 
