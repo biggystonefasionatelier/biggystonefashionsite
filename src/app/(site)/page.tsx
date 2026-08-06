@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getProducts } from "@/lib/products";
 import ProductCard from "@/components/ProductCard";
 import SignupForm from "@/components/SignupForm";
+import HeroSlideshow from "@/components/HeroSlideshow";
 import { PROMO, isPromoActive, promoDaysRemaining } from "@/lib/promo";
 
 export const revalidate = 60;
@@ -10,29 +11,36 @@ export default async function HomePage() {
   const featured = await getProducts("retail", 8);
   const promoActive = isPromoActive();
   const daysLeft = promoDaysRemaining();
+  const heroImages = featured
+    .map((p) => p.image_url)
+    .filter((url): url is string => !!url)
+    .slice(0, 6);
 
   return (
     <div>
       {/* Hero */}
-      <section className="bg-brand-black px-4 py-20 text-center text-brand-gold-light">
-        <h1 className="mx-auto max-w-2xl text-3xl font-bold sm:text-4xl">
-          Luxury-look jewelry. Real prices.
-        </h1>
-        <p className="mx-auto mt-4 max-w-xl text-brand-gold">
-          {promoActive
-            ? `New pieces every month, from ₦1,000 — and right now, ${PROMO.percent}% off everything.`
-            : "New pieces every month, from ₦1,000."}
-        </p>
-        <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-          <Link
-            href="/shop"
-            className="rounded-full bg-brand-gold px-6 py-3 text-sm font-medium text-brand-black"
-          >
-            {promoActive ? "Shop the September Sale" : "Shop now"}
-          </Link>
-          <Link href="/delivery" className="text-sm underline underline-offset-4">
-            Unilag? Pick up same-day →
-          </Link>
+      <section className="relative overflow-hidden bg-brand-black px-4 py-20 text-center text-brand-gold-light">
+        <HeroSlideshow images={heroImages} />
+        <div className="relative z-10">
+          <h1 className="mx-auto max-w-2xl text-3xl font-bold drop-shadow-[0_1px_6px_rgba(0,0,0,0.6)] sm:text-4xl">
+            Luxury-look jewelry. Real prices.
+          </h1>
+          <p className="mx-auto mt-4 max-w-xl text-brand-gold drop-shadow-[0_1px_4px_rgba(0,0,0,0.6)]">
+            {promoActive
+              ? `New pieces every month, from ₦1,000 — and right now, ${PROMO.percent}% off everything.`
+              : "New pieces every month, from ₦1,000."}
+          </p>
+          <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+            <Link
+              href="/shop"
+              className="rounded-full bg-brand-gold px-6 py-3 text-sm font-medium text-brand-black"
+            >
+              {promoActive ? "Shop the September Sale" : "Shop now"}
+            </Link>
+            <Link href="/delivery" className="text-sm underline underline-offset-4 drop-shadow-[0_1px_4px_rgba(0,0,0,0.6)]">
+              Unilag? Pick up same-day →
+            </Link>
+          </div>
         </div>
       </section>
 
