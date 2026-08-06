@@ -4,14 +4,18 @@ import { useEffect, useState } from "react";
 import { PROMO, promoDaysRemaining } from "@/lib/promo";
 import SignupForm from "./SignupForm";
 
+// See SignupPopup.tsx for why this suppresses per-session instead of
+// permanently on close - same fix, same reasoning.
 const DISMISSED_KEY = "biggystone_sale_popup_dismissed";
+const SIGNED_UP_KEY = "biggystone_sale_popup_signed_up";
 const SHOW_DELAY_MS = 3000;
 
 export default function SalePopup() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    if (localStorage.getItem(DISMISSED_KEY)) return;
+    if (localStorage.getItem(SIGNED_UP_KEY)) return;
+    if (sessionStorage.getItem(DISMISSED_KEY)) return;
 
     const timer = setTimeout(() => setVisible(true), SHOW_DELAY_MS);
     return () => clearTimeout(timer);
@@ -19,7 +23,7 @@ export default function SalePopup() {
 
   function dismiss() {
     setVisible(false);
-    localStorage.setItem(DISMISSED_KEY, "1");
+    sessionStorage.setItem(DISMISSED_KEY, "1");
   }
 
   if (!visible) return null;
@@ -57,7 +61,7 @@ export default function SalePopup() {
           Drop your details for first access to new drops too:
         </p>
         <div className="mt-2">
-          <SignupForm compact onSuccess={() => localStorage.setItem(DISMISSED_KEY, "1")} />
+          <SignupForm compact onSuccess={() => localStorage.setItem(SIGNED_UP_KEY, "1")} />
         </div>
       </div>
     </div>

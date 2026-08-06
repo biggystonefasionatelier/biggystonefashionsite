@@ -3,14 +3,24 @@
 import { useEffect, useState } from "react";
 import SignupForm from "./SignupForm";
 
+// Closing the popup (the X, or tapping the dark background - easy to do
+// by accident on a phone) used to suppress it forever via localStorage,
+// which read as "it only shows once" and never came back even on a later
+// visit. Now a close only suppresses it for that browser session
+// (sessionStorage - cleared once the tab/site is closed), so it shows
+// again next time someone opens the site. An actual signup silences it
+// for good (localStorage), since there's no reason to keep asking someone
+// who's already on the list.
 const DISMISSED_KEY = "biggystone_signup_popup_dismissed";
+const SIGNED_UP_KEY = "biggystone_signup_popup_signed_up";
 const SHOW_DELAY_MS = 4000;
 
 export default function SignupPopup() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    if (localStorage.getItem(DISMISSED_KEY)) return;
+    if (localStorage.getItem(SIGNED_UP_KEY)) return;
+    if (sessionStorage.getItem(DISMISSED_KEY)) return;
 
     const timer = setTimeout(() => setVisible(true), SHOW_DELAY_MS);
     return () => clearTimeout(timer);
@@ -18,7 +28,7 @@ export default function SignupPopup() {
 
   function dismiss() {
     setVisible(false);
-    localStorage.setItem(DISMISSED_KEY, "1");
+    sessionStorage.setItem(DISMISSED_KEY, "1");
   }
 
   if (!visible) return null;
@@ -47,7 +57,7 @@ export default function SignupPopup() {
         </p>
 
         <div className="mt-5">
-          <SignupForm compact onSuccess={() => localStorage.setItem(DISMISSED_KEY, "1")} />
+          <SignupForm compact onSuccess={() => localStorage.setItem(SIGNED_UP_KEY, "1")} />
         </div>
       </div>
     </div>
