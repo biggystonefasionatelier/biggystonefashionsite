@@ -47,6 +47,12 @@ export default function AdminSignupsPage() {
       .then((data) => setSignups(data.signups ?? []));
   }, []);
 
+  async function handleDelete(id: string, name: string) {
+    if (!confirm(`Remove "${name}" from the list? This can't be undone.`)) return;
+    setSignups((prev) => (prev ? prev.filter((s) => s.id !== id) : prev));
+    await fetch(`/api/admin/signups/${id}`, { method: "DELETE" });
+  }
+
   function handleExport() {
     if (!signups || signups.length === 0) return;
     const csv = toCsv(signups);
@@ -87,6 +93,7 @@ export default function AdminSignupsPage() {
                 <th className="px-4 py-3">Birthday</th>
                 <th className="px-4 py-3">Synced</th>
                 <th className="px-4 py-3">Joined</th>
+                <th className="px-4 py-3"></th>
               </tr>
             </thead>
             <tbody>
@@ -98,6 +105,14 @@ export default function AdminSignupsPage() {
                   <td className="px-4 py-3">{formatBirthday(s.birthday)}</td>
                   <td className="px-4 py-3">{s.brevo_synced ? "Yes" : "No"}</td>
                   <td className="px-4 py-3">{new Date(s.created_at).toLocaleDateString()}</td>
+                  <td className="px-4 py-3">
+                    <button
+                      onClick={() => handleDelete(s.id, s.name)}
+                      className="text-xs text-red-600 underline"
+                    >
+                      Remove
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>

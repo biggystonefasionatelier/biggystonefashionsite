@@ -66,6 +66,27 @@ export async function addBrevoContact(params: {
 }
 
 /**
+ * Removes a contact from Brevo entirely - used when deleting a signup from
+ * the admin dashboard (e.g. test/junk entries), so a stray contact doesn't
+ * linger in the real marketing list or get caught by the birthday
+ * automation. 404 (already gone) is treated as success.
+ */
+export async function deleteBrevoContact(email: string): Promise<void> {
+  const apiKey = process.env.BREVO_API_KEY;
+  if (!apiKey) return;
+
+  const res = await fetch(`https://api.brevo.com/v3/contacts/${encodeURIComponent(email)}`, {
+    method: "DELETE",
+    headers: { "api-key": apiKey, Accept: "application/json" },
+  });
+
+  if (res.status !== 204 && res.status !== 404) {
+    const body = await res.text();
+    console.error("Brevo contact delete failed:", res.status, body);
+  }
+}
+
+/**
  * Flags a contact as having redeemed their birthday discount this year, so
  * the "day of" birthday workflow in Brevo can branch on it (e.g. skip the
  * discount reminder and just send a celebration message instead). This
