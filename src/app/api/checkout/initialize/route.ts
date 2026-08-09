@@ -12,6 +12,7 @@ import {
   discountIneligibilityMessage,
 } from "@/lib/discount";
 import { checkGiftVoucherEligibility, giftVoucherIneligibilityMessage } from "@/lib/giftVoucher";
+import { calculateBundleDiscount } from "@/lib/bundleDiscount";
 import { calculateDeliveryFee, findDeliveryZone, type DeliveryMethod } from "@/lib/delivery";
 import { PROMO, isPromoActive } from "@/lib/promo";
 
@@ -107,9 +108,19 @@ export async function POST(request: Request) {
       };
     });
 
+    // Automatic "buy 3 of the same product" bundle discount - retail
+    // only, ₦2,000+ items only, repeats per complete group of 3. Not a
+    // code the customer types in; see src/lib/bundleDiscount.ts.
+    const bundleDiscount =
+      orderType === "retail"
+        ? calculateBundleDiscount(
+            orderItems.map((i) => ({ productId: i.product_id, price: i.unit_price, quantity: i.quantity }))
+          )
+        : 0;
+
     // For wholesale, a deposit-only checkout charges a percentage now;
     // the remainder is collected before delivery (handled manually/admin side).
-    let amountDue = total;
+    let amountDue = total - bundleDiscount;
     if (orderType === "wholesale" && depositOnly) {
       const depositPercents = products
         .map((p) => p.deposit_percent ?? 100)
@@ -206,6 +217,7 @@ export async function POST(request: Request) {
       discount_code: appliedDiscountCode,
       discount_amount: discountAmount || null,
       gift_voucher_code: appliedGiftVoucherCode,
+      bundle_discount_amount: bundleDiscount || null,
       delivery_method: orderType === "retail" ? deliveryMethod ?? null : null,
       delivery_zone: orderType === "retail" ? deliveryZone || null : null,
       delivery_zone_label: orderType === "retail" ? zone?.label ?? null : null,

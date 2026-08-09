@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useCart } from "@/components/CartContext";
 import { DELIVERY_ZONES, type DeliveryZone } from "@/lib/delivery";
+import { calculateBundleDiscount } from "@/lib/bundleDiscount";
 
 type DeliveryMethod = "pickup" | "delivery";
 
@@ -41,6 +42,12 @@ export default function CheckoutPage() {
   const orderTypes = new Set(items.map((i) => i.orderType));
   const mixedCart = orderTypes.size > 1;
   const orderType = items[0].orderType;
+  const bundleDiscount =
+    orderType === "retail"
+      ? calculateBundleDiscount(
+          items.map((i) => ({ productId: i.productId, price: i.price, quantity: i.quantity }))
+        )
+      : 0;
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -106,6 +113,11 @@ export default function CheckoutPage() {
         {orderType === "wholesale" ? "Pre-order wholesale" : "Retail"} order —
         subtotal ₦{subtotal.toLocaleString()}
       </p>
+      {bundleDiscount > 0 && (
+        <p className="mt-1 text-sm font-medium text-brand-gold">
+          📦 Buy-3 bundle discount applied — ₦{bundleDiscount.toLocaleString()} off
+        </p>
+      )}
 
       <form onSubmit={handleSubmit} className="mt-6 grid gap-3">
         <input

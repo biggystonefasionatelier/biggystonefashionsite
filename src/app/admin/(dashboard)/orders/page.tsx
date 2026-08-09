@@ -26,6 +26,7 @@ type Order = {
   gift_name?: string;
   discount_code?: string | null;
   discount_amount?: number | null;
+  bundle_discount_amount?: number | null;
   delivery_method?: "pickup" | "delivery" | null;
   delivery_zone_label?: string | null;
   delivery_fee?: number | null;
@@ -140,6 +141,12 @@ export default function AdminOrdersPage() {
                     : " — free delivery on this order"}
                 </p>
               )}
+
+              {o.bundle_discount_amount ? (
+                <p className="mt-2 border-t border-black/5 pt-2 text-xs text-neutral-600">
+                  📦 Buy-3 bundle discount — ₦{Number(o.bundle_discount_amount).toLocaleString()} off
+                </p>
+              ) : null}
 
               {o.gift_number && (
                 <p className="mt-2 border-t border-black/5 pt-2 text-xs font-medium text-brand-black">
