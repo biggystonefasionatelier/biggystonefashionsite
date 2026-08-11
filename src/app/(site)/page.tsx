@@ -82,7 +82,7 @@ export default async function HomePage() {
 
       {/* Featured collection */}
       <section className="mx-auto max-w-6xl px-4 py-10">
-        <h2 className="text-xl font-bold">This month&apos;s edit</h2>
+        <h2 className="text-xl font-bold">New Arrivals</h2>
         {featured.length === 0 ? (
           <p className="mt-4 text-sm text-neutral-500">
             New pieces are being added — check back soon.
@@ -113,12 +113,12 @@ export default async function HomePage() {
 
       {/* About teaser */}
       <section className="mx-auto max-w-3xl px-4 py-14 text-center">
-        <h2 className="text-xl font-bold">Why Biggystone</h2>
+        <h2 className="text-xl font-bold">Our Story</h2>
         <p className="mt-3 text-sm text-neutral-600">
-          Biggystone Fashion Atelier started in Lagos with one idea: you
-          shouldn&apos;t have to choose between looking expensive and staying in
-          budget. Every piece is picked to feel like a statement, priced like
-          a treat.
+          Started in 2019 on one decision: students shouldn&apos;t have to
+          break the bank to look good. Now based in Lagos, and for
+          everybody — students, professionals, working class, married,
+          single.
         </p>
         <Link href="/about" className="mt-3 inline-block text-sm underline">
           Read our story →
