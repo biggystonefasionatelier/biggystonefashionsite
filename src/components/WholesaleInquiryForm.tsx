@@ -56,8 +56,8 @@ export default function WholesaleInquiryForm() {
   if (status === "success") {
     return (
       <p className="rounded-lg bg-brand-gold-light/40 p-4 text-sm text-neutral-800">
-        Got it — we&apos;ll reach out on WhatsApp/email with pricing and next
-        steps. Taking you to our pre-order circle now...
+        Got it — Taking you to our pre-order circle now for the pricing and
+        next steps.
       </p>
     );
   }
