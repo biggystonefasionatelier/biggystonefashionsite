@@ -4,6 +4,8 @@ import { useState, type FormEvent } from "react";
 
 type Status = "idle" | "submitting" | "success" | "error";
 
+const PRE_ORDER_LANDING_URL = "https://shop.biggystonefashion.com";
+
 export default function WholesaleInquiryForm() {
   const [status, setStatus] = useState<Status>("idle");
   const [errorMsg, setErrorMsg] = useState("");
@@ -39,6 +41,12 @@ export default function WholesaleInquiryForm() {
 
       setStatus("success");
       (e.target as HTMLFormElement).reset();
+      // Send them straight into the pre-order Telegram circle while
+      // they're a hot lead, right after the enquiry goes through - a
+      // short pause so they still see the confirmation before leaving.
+      setTimeout(() => {
+        window.location.href = PRE_ORDER_LANDING_URL;
+      }, 1500);
     } catch {
       setErrorMsg("Network error. Check your connection and try again.");
       setStatus("error");
@@ -49,7 +57,7 @@ export default function WholesaleInquiryForm() {
     return (
       <p className="rounded-lg bg-brand-gold-light/40 p-4 text-sm text-neutral-800">
         Got it — we&apos;ll reach out on WhatsApp/email with pricing and next
-        steps.
+        steps. Taking you to our pre-order circle now...
       </p>
     );
   }
