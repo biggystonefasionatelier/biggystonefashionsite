@@ -31,8 +31,8 @@ export default function TermsPage() {
         notice. Payment is processed securely by Paystack — we never see
         or store your card details. Discount codes, loyalty gift vouchers,
         and bundle pricing are subject to the conditions shown at
-        checkout, are limited to one use where stated, and may be changed
-        or withdrawn at any time.
+        checkout. They are limited to one use where stated, and may be
+        changed or withdrawn if need be.
       </p>
 
       <h2 className="mt-8 font-bold">Orders and stock</h2>
@@ -41,7 +41,9 @@ export default function TermsPage() {
         the time of payment — in the rare case an item sells out before
         your payment is confirmed, we&apos;ll reach out to sort out a
         replacement or refund. Wholesale orders are made/sourced to order
-        after your deposit or payment is received.
+        after your deposit or payment is received. The arrival of
+        pre-order goods and any order information will be communicated
+        via the Telegram group.
       </p>
 
       <h2 className="mt-8 font-bold">Delivery</h2>
@@ -76,12 +78,6 @@ export default function TermsPage() {
         the loyalty gift program beyond their intended one-per-person use,
         or attempt to interfere with how the site runs. We reserve the
         right to cancel orders or restrict access where this happens.
-      </p>
-
-      <h2 className="mt-8 font-bold">Governing law</h2>
-      <p className="mt-2 text-neutral-700">
-        These terms are governed by the laws of the Federal Republic of
-        Nigeria.
       </p>
 
       <h2 className="mt-8 font-bold">Changes to these terms</h2>
