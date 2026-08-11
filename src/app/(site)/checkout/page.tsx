@@ -236,6 +236,18 @@ export default function CheckoutPage() {
           </>
         )}
 
+        <p className="text-xs text-neutral-500">
+          By placing this order, you agree to our{" "}
+          <Link href="/terms" className="underline">
+            Terms
+          </Link>{" "}
+          and{" "}
+          <Link href="/refunds" className="underline">
+            Refund Policy
+          </Link>
+          .
+        </p>
+
         <button
           type="submit"
           disabled={submitting}

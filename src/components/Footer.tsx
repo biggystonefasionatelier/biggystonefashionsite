@@ -4,7 +4,7 @@ export default function Footer() {
   return (
     <footer className="mt-16 border-t border-black/10 bg-neutral-50">
       <div className="mx-auto max-w-6xl px-4 py-10 text-sm text-neutral-600">
-        <div className="grid gap-8 md:grid-cols-3">
+        <div className="grid gap-8 md:grid-cols-4">
           <div>
             <p className="font-bold text-neutral-900">Biggystone Fashion Atelier</p>
             <p className="mt-2">5, Ajileye Street, Ilaje Road,</p>
@@ -19,6 +19,15 @@ export default function Footer() {
               <li><Link href="/shop" className="hover:underline">Retail</Link></li>
               <li><Link href="/wholesale" className="hover:underline">Pre-Order Wholesale</Link></li>
               <li><Link href="/delivery" className="hover:underline">Delivery & Returns</Link></li>
+            </ul>
+          </div>
+
+          <div>
+            <p className="font-bold text-neutral-900">Policies</p>
+            <ul className="mt-2 space-y-1">
+              <li><Link href="/privacy" className="hover:underline">Privacy Policy</Link></li>
+              <li><Link href="/terms" className="hover:underline">Terms of Service</Link></li>
+              <li><Link href="/refunds" className="hover:underline">Refund & Returns Policy</Link></li>
             </ul>
           </div>
 
