@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -86,6 +87,13 @@ export default function AdminLoginPage() {
           </button>
           {error && <p className="text-xs text-red-400">{error}</p>}
         </div>
+
+        <Link
+          href="/admin/forgot-password"
+          className="mt-4 block text-center text-xs text-brand-gold-light/70 hover:text-brand-gold-light"
+        >
+          Forgot password?
+        </Link>
       </form>
     </div>
   );

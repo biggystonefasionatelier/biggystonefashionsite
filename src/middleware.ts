@@ -14,8 +14,12 @@ export async function middleware(request: NextRequest) {
   const isAdminRoute = path.startsWith("/admin") || isApiAdminRoute;
   const isPublicAuthRoute =
     path.startsWith("/admin/login") ||
+    path.startsWith("/admin/forgot-password") ||
+    path.startsWith("/admin/reset-password") ||
     path === "/api/admin/login" ||
-    path === "/api/admin/logout";
+    path === "/api/admin/logout" ||
+    path === "/api/admin/forgot-password" ||
+    path === "/api/admin/reset-password";
 
   if (!isAdminRoute || isPublicAuthRoute) {
     return NextResponse.next();

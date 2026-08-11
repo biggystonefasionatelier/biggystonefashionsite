@@ -188,6 +188,24 @@ async function sendCustomerEmail(to: string, subject: string, htmlContent: strin
   }
 }
 
+/**
+ * Sends an admin password-reset link. Called from
+ * /api/admin/forgot-password, which always responds with the same generic
+ * message regardless of whether this actually sends - so a failure here
+ * (e.g. Brevo misconfigured) is logged for manual follow-up, not surfaced
+ * to whoever requested the reset.
+ */
+export async function sendAdminPasswordResetEmail(email: string, resetUrl: string): Promise<void> {
+  await sendCustomerEmail(
+    email,
+    "Reset your Biggystone admin password",
+    `<p>A password reset was requested for this admin account.</p>
+     <p><a href="${resetUrl}">Click here to set a new password</a></p>
+     <p>This link expires in 1 hour and can only be used once.</p>
+     <p>If you didn't request this, you can safely ignore this email - your password won't change.</p>`
+  );
+}
+
 export async function sendGiftVoucherEmail(params: {
   email: string;
   customerName: string;
