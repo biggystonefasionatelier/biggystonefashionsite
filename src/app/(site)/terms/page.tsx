@@ -68,8 +68,6 @@ export default function TermsPage() {
       <p className="mt-2 text-neutral-700">
         You don&apos;t need to create an account to shop with us — orders
         are tracked by the email and phone number you provide at checkout.
-        (Our admin dashboard is separate and only accessible to Biggystone
-        staff.)
       </p>
 
       <h2 className="mt-8 font-bold">Fair use</h2>

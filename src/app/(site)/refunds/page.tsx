@@ -22,6 +22,15 @@ export default function RefundsPage() {
         WhatsApp first if you&apos;re unsure.
       </p>
 
+      <h2 className="mt-8 font-bold">Partial refunds</h2>
+      <p className="mt-2 text-neutral-700">
+        There are certain situations where only partial refunds are
+        granted (if applicable):
+      </p>
+      <ul className="mt-2 list-disc space-y-1 pl-5 text-neutral-700">
+        <li>Any item not in its original condition, is damaged, or is missing parts for reasons not due to our error.</li>
+      </ul>
+
       <h2 className="mt-8 font-bold">Pre-order wholesale</h2>
       <p className="mt-2 text-neutral-700">
         Wholesale pieces are made or sourced to order, so change-of-mind

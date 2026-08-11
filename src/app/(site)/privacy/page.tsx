@@ -26,11 +26,7 @@ export default function PrivacyPage() {
       <h2 className="mt-8 font-bold">What we don&apos;t collect</h2>
       <p className="mt-2 text-neutral-700">
         We never see or store your card details — payment is handled
-        entirely by Paystack on their own secure checkout page. We also
-        don&apos;t run any analytics or advertising trackers on this site
-        (no Google Analytics, no Facebook Pixel, nothing like that) — the
-        only thing stored in your browser is your shopping cart, kept
-        locally on your device until you check out.
+        entirely by Paystack on their own secure checkout page.
       </p>
 
       <h2 className="mt-8 font-bold">How we use it</h2>
@@ -49,7 +45,6 @@ export default function PrivacyPage() {
       <ul className="mt-2 list-disc space-y-1 pl-5 text-neutral-700">
         <li><strong>Paystack</strong> — processes your payment directly; we never see your card details.</li>
         <li><strong>Brevo</strong> — sends the emails described above (signup confirmations, birthday offers, order updates). You can unsubscribe from marketing emails at any time using the link in any email we send.</li>
-        <li><strong>MongoDB Atlas</strong> and <strong>Vercel</strong> — host our database and website respectively.</li>
       </ul>
 
       <h2 className="mt-8 font-bold">How long we keep it</h2>
@@ -66,13 +61,6 @@ export default function PrivacyPage() {
         on WhatsApp or email (below). For marketing emails specifically,
         you can also unsubscribe yourself using the link at the bottom of
         any email.
-      </p>
-
-      <h2 className="mt-8 font-bold">Keeping your information safe</h2>
-      <p className="mt-2 text-neutral-700">
-        Account passwords are never stored in plain text, our admin
-        dashboard is protected by a login only Faith has access to, and
-        all traffic to this site is encrypted (https).
       </p>
 
       <h2 className="mt-8 font-bold">Children</h2>
