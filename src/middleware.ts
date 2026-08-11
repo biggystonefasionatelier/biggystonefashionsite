@@ -10,16 +10,6 @@ import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/session";
  */
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
-
-  // shop.biggystonefashion.com is shared as a direct link to the
-  // pre-order wholesale landing page, not the homepage - only the root
-  // path is special-cased so other pages on that subdomain (e.g. /cart)
-  // still behave normally.
-  const hostname = request.headers.get("host") ?? "";
-  if (hostname.startsWith("shop.") && path === "/") {
-    return NextResponse.rewrite(new URL("/wholesale", request.url));
-  }
-
   const isApiAdminRoute = path.startsWith("/api/admin");
   const isAdminRoute = path.startsWith("/admin") || isApiAdminRoute;
   const isPublicAuthRoute =
@@ -48,5 +38,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/admin/:path*", "/api/admin/:path*"],
+  matcher: ["/admin/:path*", "/api/admin/:path*"],
 };
