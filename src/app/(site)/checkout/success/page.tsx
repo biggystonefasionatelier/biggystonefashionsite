@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useCart } from "@/components/CartContext";
 import GiftPicker from "@/components/GiftPicker";
+import { trackPurchase } from "@/lib/analytics";
 
 type VerifyState = "checking" | "paid" | "failed" | "error";
 
@@ -24,6 +25,16 @@ function SuccessContent() {
         if (data.status === "paid") {
           setState("paid");
           clear();
+
+          // Guard against double-counting the same order if this page is
+          // refreshed (the verify call above is safe to repeat, but the ad
+          // pixel shouldn't fire twice for one purchase).
+          const trackedKey = `biggystone_purchase_tracked_${reference}`;
+          if (data.order?.total && !sessionStorage.getItem(trackedKey)) {
+            trackPurchase(data.order.total);
+            sessionStorage.setItem(trackedKey, "1");
+          }
+
           if (data.order?.gift_eligible && !data.order?.gift_number) {
             setShowGiftPicker(true);
           }
