@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { signupSchema } from "@/lib/validation";
 import { getDb } from "@/lib/mongodb";
-import { addBrevoContact, sendAdminNotification } from "@/lib/brevo";
+import { addBrevoContact, sendAdminNotification, sendWelcomeEmail } from "@/lib/brevo";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 
 export async function POST(request: Request) {
@@ -37,16 +37,23 @@ export async function POST(request: Request) {
     const db = await getDb();
     const signups = db.collection("email_signups");
 
-    await signups.updateOne(
+    const upsertResult = await signups.updateOne(
       { email },
       { $set: { name, email, phone, birthday: birthday || null }, $setOnInsert: { created_at: new Date(), brevo_synced: false } },
       { upsert: true }
     );
+    const isNewSignup = upsertResult.upsertedCount > 0;
 
     const { synced } = await addBrevoContact({ name, email, phone, birthday: birthday || undefined });
 
     if (synced) {
       await signups.updateOne({ email }, { $set: { brevo_synced: true } });
+    }
+
+    // Only welcome brand-new signups - re-submitting the form to update
+    // your birthday/phone shouldn't trigger a second welcome email.
+    if (isNewSignup) {
+      await sendWelcomeEmail({ email, name });
     }
 
     await sendAdminNotification(

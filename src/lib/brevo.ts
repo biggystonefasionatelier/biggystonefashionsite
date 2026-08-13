@@ -206,6 +206,41 @@ export async function sendAdminPasswordResetEmail(email: string, resetUrl: strin
   );
 }
 
+const LOGO_URL =
+  "https://vf7pcobtrhakoohu.public.blob.vercel-storage.com/products/d668a454-d736-4695-a156-89a2b7aa42ff.png";
+
+/**
+ * Sent the moment someone signs up (see /api/signup), instead of relying on
+ * a Brevo dashboard automation - a code-triggered email like this can't
+ * silently break the way a manually-built workflow step can, and it fires
+ * immediately rather than waiting on Brevo's automation delay.
+ */
+export async function sendWelcomeEmail(params: { email: string; name: string }): Promise<void> {
+  const firstName = params.name.trim().split(" ")[0] || params.name;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://biggystonefashion.com";
+
+  await sendCustomerEmail(
+    params.email,
+    "Welcome to Biggystone Fashion Atelier 🎉",
+    `<div style="font-family:sans-serif;max-width:480px;margin:0 auto;">
+       <img src="${LOGO_URL}" alt="Biggystone Fashion Atelier" style="height:48px;margin-bottom:16px;">
+       <p>Hi ${firstName},</p>
+       <p>Welcome to Biggystone Fashion Atelier — thank you for joining us. We started
+       in 2019 on one idea: you shouldn't have to break the bank to look good, and
+       we've carried that with us as we've grown from a small campus favorite into
+       an atelier serving customers across Lagos and beyond.</p>
+       <p>Here's what to expect now that you're on the list:</p>
+       <ul>
+         <li>First access to new drops before anyone else hears about them</li>
+         <li>A 10% discount code (<strong>BSTONEBDAY</strong>) to use at checkout during your birthday month</li>
+         <li>Something extra during our September sale, every year, in honor of the person Biggystone is named after</li>
+       </ul>
+       <p><a href="${siteUrl}/shop" style="display:inline-block;margin-top:8px;padding:10px 20px;background:#111;color:#f5c453;text-decoration:none;border-radius:999px;">Shop now</a></p>
+       <p style="margin-top:24px;">With love,<br>Faith, Founder — Biggystone Fashion Atelier</p>
+     </div>`
+  );
+}
+
 export async function sendGiftVoucherEmail(params: {
   email: string;
   customerName: string;
