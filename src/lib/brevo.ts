@@ -229,11 +229,17 @@ export async function sendWelcomeEmail(params: { email: string; name: string }):
        in 2019 on one idea: you shouldn't have to break the bank to look good, and
        we've carried that with us as we've grown from a small campus favorite into
        an atelier serving customers across Lagos and beyond.</p>
-       <p>Here's what to expect now that you're on the list:</p>
+       <p>Here's what you get shopping with us:</p>
        <ul>
-         <li>First access to new drops before anyone else hears about them</li>
-         <li>A 10% discount code (<strong>BSTONEBDAY</strong>) to use at checkout during your birthday month</li>
-         <li>Something extra during our September sale, every year, in honor of the person Biggystone is named after</li>
+         <li><strong>Real affordability</strong> — pieces from ₦1,000, most under ₦5,000</li>
+         <li><strong>New drops every month</strong> — picked to match what's actually trending</li>
+         <li><strong>First access</strong> — you'll hear about new pieces before anyone else, as someone on this list</li>
+         <li><strong>Fast delivery</strong> — same-day pickup for Unilag, nationwide delivery elsewhere with WhatsApp updates the whole way</li>
+         <li><strong>A birthday discount</strong> — code <strong>BSTONEBDAY</strong> for 10% off, valid during your birthday month</li>
+         <li><strong>Loyalty rewards</strong> — every 5th qualifying order unlocks a surprise gift, on us</li>
+         <li><strong>A September to remember</strong> — a discount and free delivery on qualifying orders, every September, in honor of the person Biggystone is named after</li>
+         <li><strong>Buying in bulk?</strong> — pre-order wholesale pricing if you're reselling</li>
+         <li><strong>Real support</strong> — message us on WhatsApp and get a reply from a real person, not a bot</li>
        </ul>
        <p><a href="${siteUrl}/shop" style="display:inline-block;margin-top:8px;padding:10px 20px;background:#111;color:#f5c453;text-decoration:none;border-radius:999px;">Shop now</a></p>
        <p style="margin-top:24px;">With love,<br>Faith, Founder — Biggystone Fashion Atelier</p>
