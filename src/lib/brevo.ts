@@ -277,7 +277,7 @@ export async function sendReviewRequestEmail(params: { email: string; name: stri
      it genuinely helps other people find us.</p>
      <p><a href="${reviewLink}" style="display:inline-block;padding:10px 20px;background:#111;color:#f5c453;text-decoration:none;border-radius:999px;">Leave a review</a></p>
      <p style="margin-top:20px;">Not quite happy with something instead? Please tell us directly
-     before anything else — we'd rather make it right than have you leave unhappy.</p>
+     — we'd rather make it right than have you leave unhappy.</p>
      <p><a href="${whatsappHref}" style="display:inline-block;padding:10px 20px;background:#25D366;color:#fff;text-decoration:none;border-radius:999px;">Chat with us on WhatsApp</a></p>
      <p style="margin-top:24px;">With love,<br>Faith, Founder — Biggystone Fashion Atelier</p>`
   );
