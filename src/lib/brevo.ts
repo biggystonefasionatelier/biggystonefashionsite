@@ -247,6 +247,33 @@ export async function sendWelcomeEmail(params: { email: string; name: string }):
   );
 }
 
+/**
+ * Sent 7 days after a paid order (see /api/cron/review-requests) - long
+ * enough that most orders have actually been picked up/delivered by then,
+ * so the ask is about the product, not just the checkout experience.
+ * Silently skipped if GOOGLE_REVIEW_LINK isn't set yet.
+ */
+export async function sendReviewRequestEmail(params: { email: string; name: string }): Promise<void> {
+  const reviewLink = process.env.GOOGLE_REVIEW_LINK;
+  if (!reviewLink) {
+    console.warn("GOOGLE_REVIEW_LINK not configured - skipping review request email");
+    return;
+  }
+
+  const firstName = params.name.trim().split(" ")[0] || params.name;
+
+  await sendCustomerEmail(
+    params.email,
+    "How's your Biggystone piece? 💛",
+    `<p>Hi ${firstName},</p>
+     <p>Hope you're loving what you got from Biggystone Fashion Atelier! If you have
+     a minute, a quick Google review would mean a lot to us as a growing atelier -
+     it genuinely helps other people find us.</p>
+     <p><a href="${reviewLink}" style="display:inline-block;padding:10px 20px;background:#111;color:#f5c453;text-decoration:none;border-radius:999px;">Leave a review</a></p>
+     <p style="margin-top:24px;">With love,<br>Faith, Founder — Biggystone Fashion Atelier</p>`
+  );
+}
+
 export async function sendGiftVoucherEmail(params: {
   email: string;
   customerName: string;
