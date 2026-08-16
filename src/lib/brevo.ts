@@ -253,6 +253,9 @@ export async function sendWelcomeEmail(params: { email: string; name: string }):
  * so the ask is about the product, not just the checkout experience.
  * Silently skipped if GOOGLE_REVIEW_LINK isn't set yet.
  */
+// Same number/style as the site-wide WhatsApp button (src/components/WhatsAppButton.tsx).
+const WHATSAPP_NUMBER = "2348148263705";
+
 export async function sendReviewRequestEmail(params: { email: string; name: string }): Promise<void> {
   const reviewLink = process.env.GOOGLE_REVIEW_LINK;
   if (!reviewLink) {
@@ -261,6 +264,9 @@ export async function sendReviewRequestEmail(params: { email: string; name: stri
   }
 
   const firstName = params.name.trim().split(" ")[0] || params.name;
+  const whatsappHref = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
+    "Hi Biggystone, I have a concern about my recent order"
+  )}`;
 
   await sendCustomerEmail(
     params.email,
@@ -270,6 +276,9 @@ export async function sendReviewRequestEmail(params: { email: string; name: stri
      a minute, a quick Google review would mean a lot to us as a growing atelier -
      it genuinely helps other people find us.</p>
      <p><a href="${reviewLink}" style="display:inline-block;padding:10px 20px;background:#111;color:#f5c453;text-decoration:none;border-radius:999px;">Leave a review</a></p>
+     <p style="margin-top:20px;">Not quite happy with something instead? Please tell us directly
+     before anything else — we'd rather make it right than have you leave unhappy.</p>
+     <p><a href="${whatsappHref}" style="display:inline-block;padding:10px 20px;background:#25D366;color:#fff;text-decoration:none;border-radius:999px;">Chat with us on WhatsApp</a></p>
      <p style="margin-top:24px;">With love,<br>Faith, Founder — Biggystone Fashion Atelier</p>`
   );
 }
