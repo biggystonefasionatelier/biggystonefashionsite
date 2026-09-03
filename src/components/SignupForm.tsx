@@ -27,11 +27,19 @@ export default function SignupForm({
     const form = new FormData(e.currentTarget);
     const birthMonth = String(form.get("birthMonth") ?? "");
     const birthDay = String(form.get("birthDay") ?? "");
+    // Read straight from the URL rather than useSearchParams(), which
+    // would force this component's page tree into a Suspense boundary
+    // just to support a link parameter that's only read once, on submit.
+    const referralCode =
+      typeof window !== "undefined"
+        ? new URLSearchParams(window.location.search).get("ref") ?? ""
+        : "";
     const payload = {
       name: String(form.get("name") ?? ""),
       email: String(form.get("email") ?? ""),
       phone: String(form.get("phone") ?? ""),
       birthday: birthMonth && birthDay ? `${birthMonth.padStart(2, "0")}-${birthDay.padStart(2, "0")}` : "",
+      referralCode,
     };
 
     try {

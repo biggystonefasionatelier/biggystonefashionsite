@@ -56,6 +56,14 @@ async function run() {
   await db.collection("gift_vouchers").createIndex({ code: 1 }, { unique: true });
   await db.collection("gift_vouchers").createIndex({ email: 1 });
 
+  // Refer-a-friend rewards - see src/lib/referral.ts. referral_code is
+  // sparse since older signups won't have one until they're backfilled.
+  await db.collection("email_signups").createIndex(
+    { referral_code: 1 },
+    { unique: true, sparse: true }
+  );
+  await db.collection("referral_credits").createIndex({ referrer_email: 1, earned_at: 1 });
+
   console.log("Indexes created. Your database is ready.");
 }
 

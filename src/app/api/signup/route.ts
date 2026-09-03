@@ -3,6 +3,7 @@ import { signupSchema } from "@/lib/validation";
 import { getDb } from "@/lib/mongodb";
 import { addBrevoContact, sendAdminNotification, sendWelcomeEmail } from "@/lib/brevo";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
+import { ensureReferralCode, creditReferralIfValid } from "@/lib/referral";
 
 export async function POST(request: Request) {
   // Max 5 signups per IP per 10 minutes - generous for real users, slows
@@ -31,7 +32,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const { name, email, phone, birthday } = parsed.data;
+  const { name, email, phone, birthday, referralCode } = parsed.data;
 
   try {
     const db = await getDb();
@@ -50,10 +51,16 @@ export async function POST(request: Request) {
       await signups.updateOne({ email }, { $set: { brevo_synced: true } });
     }
 
+    const myReferralCode = await ensureReferralCode(db, email);
+
     // Only welcome brand-new signups - re-submitting the form to update
-    // your birthday/phone shouldn't trigger a second welcome email.
+    // your birthday/phone shouldn't trigger a second welcome email or a
+    // repeat referral credit for whoever referred them the first time.
     if (isNewSignup) {
-      await sendWelcomeEmail({ email, name });
+      await sendWelcomeEmail({ email, name, referralCode: myReferralCode });
+      if (referralCode) {
+        await creditReferralIfValid(db, referralCode, email);
+      }
     }
 
     await sendAdminNotification(

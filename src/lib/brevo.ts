@@ -215,9 +215,14 @@ const LOGO_URL =
  * silently break the way a manually-built workflow step can, and it fires
  * immediately rather than waiting on Brevo's automation delay.
  */
-export async function sendWelcomeEmail(params: { email: string; name: string }): Promise<void> {
+export async function sendWelcomeEmail(params: {
+  email: string;
+  name: string;
+  referralCode: string;
+}): Promise<void> {
   const firstName = params.name.trim().split(" ")[0] || params.name;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://biggystonefashion.com";
+  const referralLink = `${siteUrl}/?ref=${params.referralCode}`;
 
   await sendCustomerEmail(
     params.email,
@@ -242,6 +247,12 @@ export async function sendWelcomeEmail(params: { email: string; name: string }):
          <li><strong>Real support</strong> — message us on WhatsApp and get a reply from a real person, not a bot</li>
        </ul>
        <p><a href="${siteUrl}/shop" style="display:inline-block;margin-top:8px;padding:10px 20px;background:#111;color:#f5c453;text-decoration:none;border-radius:999px;">Shop now</a></p>
+       <p style="margin-top:24px;font-weight:bold;">Earn while you're at it</p>
+       <p>Share your personal link with friends — you'll get ₦100 credit every time
+       someone new joins using it. Credit lasts 7 days, and you can use whatever's
+       still valid by entering your code (<strong>${params.referralCode}</strong>)
+       as a discount code at checkout.</p>
+       <p><a href="${referralLink}" style="word-break:break-all;">${referralLink}</a></p>
        <p style="margin-top:24px;">With love,<br>Faith, Founder — Biggystone Fashion Atelier</p>
      </div>`
   );

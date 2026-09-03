@@ -10,6 +10,7 @@ type Signup = {
   birthday: string | null; // MM-DD, no year
   brevo_synced: boolean;
   created_at: string;
+  referral_code?: string;
 };
 
 const MONTHS = [
@@ -92,6 +93,7 @@ export default function AdminSignupsPage() {
                 <th className="px-4 py-3">Phone</th>
                 <th className="px-4 py-3">Birthday</th>
                 <th className="px-4 py-3">Synced</th>
+                <th className="px-4 py-3">Referral code</th>
                 <th className="px-4 py-3">Joined</th>
                 <th className="px-4 py-3"></th>
               </tr>
@@ -104,6 +106,7 @@ export default function AdminSignupsPage() {
                   <td className="px-4 py-3">{s.phone}</td>
                   <td className="px-4 py-3">{formatBirthday(s.birthday)}</td>
                   <td className="px-4 py-3">{s.brevo_synced ? "Yes" : "No"}</td>
+                  <td className="px-4 py-3 font-mono text-xs">{s.referral_code ?? "—"}</td>
                   <td className="px-4 py-3">{new Date(s.created_at).toLocaleDateString()}</td>
                   <td className="px-4 py-3">
                     <button

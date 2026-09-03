@@ -16,6 +16,7 @@ export const signupSchema = z.object({
     .regex(/^(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/, "Birthday must be in MM-DD format")
     .optional()
     .or(z.literal("")),
+  referralCode: z.string().trim().max(30).optional().or(z.literal("")),
 });
 
 export const wholesaleInquirySchema = z.object({

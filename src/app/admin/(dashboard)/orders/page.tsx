@@ -135,7 +135,12 @@ export default function AdminOrdersPage() {
 
               {o.discount_code && (
                 <p className="mt-2 border-t border-black/5 pt-2 text-xs text-neutral-600">
-                  {o.discount_code.startsWith("GIFT-") ? "🎁" : "🏷️"} Code {o.discount_code} applied
+                  {o.discount_code.startsWith("GIFT-")
+                    ? "🎁"
+                    : o.discount_code.startsWith("REF-")
+                      ? "🔗"
+                      : "🏷️"}{" "}
+                  Code {o.discount_code} applied
                   {o.discount_amount
                     ? ` — ₦${Number(o.discount_amount).toLocaleString()} off`
                     : " — free delivery on this order"}

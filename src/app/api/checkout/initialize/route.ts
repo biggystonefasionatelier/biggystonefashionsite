@@ -12,6 +12,11 @@ import {
   discountIneligibilityMessage,
 } from "@/lib/discount";
 import { checkGiftVoucherEligibility, giftVoucherIneligibilityMessage } from "@/lib/giftVoucher";
+import {
+  checkReferralCodeEligibility,
+  referralCodeIneligibilityMessage,
+  REFERRAL_CREDIT_AMOUNT,
+} from "@/lib/referral";
 import { calculateBundleDiscount } from "@/lib/bundleDiscount";
 import { calculateDeliveryFee, findDeliveryZone, type DeliveryMethod } from "@/lib/delivery";
 import { PROMO, isPromoActive } from "@/lib/promo";
@@ -131,15 +136,19 @@ export async function POST(request: Request) {
       amountDue = Math.round((total * depositPercent) / 100);
     }
 
-    // Three possible retail discount codes: the September launch promo
+    // Four possible retail discount codes: the September launch promo
     // (BSTONESEPT - date-gated, open to anyone), the birthday code
     // (BSTONEBDAY - checked against the customer's signup record, see
-    // src/lib/discount.ts), or a one-time gift voucher code (GIFT-xxxx,
+    // src/lib/discount.ts), a one-time gift voucher code (GIFT-xxxx,
     // earned by picking a non-physical loyalty gift - see
-    // src/lib/giftVoucher.ts). At most one applies per order.
+    // src/lib/giftVoucher.ts), or a referral credit code (REF-xxxx, the
+    // customer's own personal code, redeeming whatever ₦100 credits they've
+    // earned in the last 7 days - see src/lib/referral.ts). At most one
+    // applies per order.
     let discountAmount = 0;
     let appliedDiscountCode: string | null = null;
     let appliedGiftVoucherCode: string | null = null;
+    let referralCreditIds: string[] = [];
     let freeDeliveryFromVoucher = false;
     if (orderType === "retail" && discountCode) {
       const code = discountCode.trim().toUpperCase();
@@ -164,6 +173,27 @@ export async function POST(request: Request) {
         }
         appliedDiscountCode = code;
         appliedGiftVoucherCode = code;
+      } else if (code.startsWith("REF-")) {
+        const eligibility = await checkReferralCodeEligibility(db, email, code);
+        if (!eligibility.eligible) {
+          return NextResponse.json(
+            { error: referralCodeIneligibilityMessage(eligibility.reason) },
+            { status: 400 }
+          );
+        }
+        // Credits only come in whole ₦100 units, so spend as many as fit
+        // both the order total and the available balance - never partial.
+        const maxAffordable = Math.floor(amountDue / REFERRAL_CREDIT_AMOUNT);
+        const creditsToUse = eligibility.credits.slice(0, Math.min(maxAffordable, eligibility.credits.length));
+        if (creditsToUse.length === 0) {
+          return NextResponse.json(
+            { error: "Your order isn't large enough to use a ₦100 referral credit yet." },
+            { status: 400 }
+          );
+        }
+        discountAmount = creditsToUse.length * REFERRAL_CREDIT_AMOUNT;
+        referralCreditIds = creditsToUse.map((c) => c._id.toString());
+        appliedDiscountCode = code;
       } else {
         const eligibility = await checkBirthdayDiscountEligibility(db, email, discountCode);
         if (!eligibility.eligible) {
@@ -217,6 +247,7 @@ export async function POST(request: Request) {
       discount_code: appliedDiscountCode,
       discount_amount: discountAmount || null,
       gift_voucher_code: appliedGiftVoucherCode,
+      referral_credit_ids: referralCreditIds.length ? referralCreditIds : null,
       bundle_discount_amount: bundleDiscount || null,
       delivery_method: orderType === "retail" ? deliveryMethod ?? null : null,
       delivery_zone: orderType === "retail" ? deliveryZone || null : null,

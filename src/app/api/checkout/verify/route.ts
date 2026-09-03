@@ -5,6 +5,7 @@ import { verifyTransaction } from "@/lib/paystack";
 import { markGiftEligibilityIfQualifying } from "@/lib/loyalty";
 import { BIRTHDAY_DISCOUNT_CODE, markBirthdayDiscountUsed } from "@/lib/discount";
 import { markGiftVoucherUsed } from "@/lib/giftVoucher";
+import { markReferralCreditsUsed } from "@/lib/referral";
 import { markBrevoBirthdayDiscountUsed, notifyOrderPaid } from "@/lib/brevo";
 
 type OrderItemDoc = { product_id: string; product_name: string; quantity: number; unit_price: number };
@@ -24,6 +25,7 @@ type OrderDoc = {
   discount_code?: string | null;
   discount_amount?: number | null;
   gift_voucher_code?: string | null;
+  referral_credit_ids?: string[] | null;
 };
 
 /**
@@ -90,6 +92,8 @@ export async function GET(request: Request) {
       await markBrevoBirthdayDiscountUsed(order.email);
     } else if (order.gift_voucher_code) {
       await markGiftVoucherUsed(db, order.gift_voucher_code, order._id);
+    } else if (order.referral_credit_ids?.length) {
+      await markReferralCreditsUsed(db, order.referral_credit_ids, order._id);
     }
 
     await notifyOrderPaid(order);
