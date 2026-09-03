@@ -49,6 +49,13 @@ export const checkoutInitSchema = z.object({
   deliveryNote: z.string().trim().max(500).optional().or(z.literal("")),
 });
 
+export const previewDiscountSchema = z.object({
+  email: z.string().trim().email().max(200),
+  orderType: z.enum(["retail", "wholesale"]),
+  items: z.array(cartItemSchema).min(1, "Cart is empty"),
+  discountCode: z.string().trim().min(1).max(50),
+});
+
 export const claimGiftSchema = z.object({
   reference: z.string().trim().min(1),
   giftNumber: z.number().int().min(1).max(10),

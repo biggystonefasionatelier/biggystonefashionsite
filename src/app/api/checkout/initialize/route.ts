@@ -1,23 +1,10 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
-import { ObjectId } from "mongodb";
 import { checkoutInitSchema } from "@/lib/validation";
 import { getDb } from "@/lib/mongodb";
-import { toProduct, type ProductDoc } from "@/lib/products";
 import { initializeTransaction } from "@/lib/paystack";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
-import {
-  BIRTHDAY_DISCOUNT_PERCENT,
-  checkBirthdayDiscountEligibility,
-  discountIneligibilityMessage,
-} from "@/lib/discount";
-import { checkGiftVoucherEligibility, giftVoucherIneligibilityMessage } from "@/lib/giftVoucher";
-import {
-  checkReferralCodeEligibility,
-  referralCodeIneligibilityMessage,
-  REFERRAL_CREDIT_AMOUNT,
-} from "@/lib/referral";
-import { calculateBundleDiscount } from "@/lib/bundleDiscount";
+import { resolveCart, resolveDiscountCode } from "@/lib/orderPricing";
 import { calculateDeliveryFee, findDeliveryZone, type DeliveryMethod } from "@/lib/delivery";
 import { PROMO, isPromoActive } from "@/lib/promo";
 
@@ -64,77 +51,12 @@ export async function POST(request: Request) {
   try {
     const db = await getDb();
 
-    // Never trust prices/stock from the client - look everything up fresh.
-    const productIds = items.map((i) => new ObjectId(i.productId));
-    const productDocs = await db
-      .collection<ProductDoc>("products")
-      .find({ _id: { $in: productIds }, active: true })
-      .toArray();
-    const products = productDocs.map(toProduct);
-
-    if (products.length !== items.length) {
-      return NextResponse.json(
-        { error: "One or more items in your cart are no longer available." },
-        { status: 400 }
-      );
+    const cart = await resolveCart(db, { orderType, items, depositOnly });
+    if (!cart.ok) {
+      return NextResponse.json({ error: cart.error }, { status: 400 });
     }
-
-    // Guard against mixing retail and wholesale items in one checkout -
-    // they have different fulfillment/lead-time flows.
-    const mismatched = products.find((p) => p.product_type !== orderType);
-    if (mismatched) {
-      return NextResponse.json(
-        {
-          error:
-            "Retail and pre-order wholesale items can't be checked out together. Please check out separately.",
-        },
-        { status: 400 }
-      );
-    }
-
-    let total = 0;
-    const orderItems = items.map((item) => {
-      const product = products.find((p) => p.id === item.productId)!;
-
-      if (orderType === "retail" && product.stock < item.quantity) {
-        throw new Error(`Not enough stock for ${product.name}`);
-      }
-
-      const lineTotal = product.price * item.quantity;
-      total += lineTotal;
-
-      return {
-        product_id: product.id,
-        product_name: product.name,
-        quantity: item.quantity,
-        unit_price: product.price,
-        color: item.color || null,
-        image_url: product.image_url || null,
-      };
-    });
-
-    // Automatic "buy 3 of the same product" bundle discount - retail
-    // only, ₦2,000+ items only, repeats per complete group of 3. Not a
-    // code the customer types in; see src/lib/bundleDiscount.ts.
-    const bundleDiscount =
-      orderType === "retail"
-        ? calculateBundleDiscount(
-            orderItems.map((i) => ({ productId: i.product_id, price: i.unit_price, quantity: i.quantity }))
-          )
-        : 0;
-
-    // For wholesale, a deposit-only checkout charges a percentage now;
-    // the remainder is collected before delivery (handled manually/admin side).
-    let amountDue = total - bundleDiscount;
-    if (orderType === "wholesale" && depositOnly) {
-      const depositPercents = products
-        .map((p) => p.deposit_percent ?? 100)
-        .filter((n) => !Number.isNaN(n));
-      const depositPercent = depositPercents.length
-        ? Math.max(...depositPercents)
-        : 100;
-      amountDue = Math.round((total * depositPercent) / 100);
-    }
+    const { orderItems, total, bundleDiscount } = cart;
+    let amountDue = cart.amountDue;
 
     // Four possible retail discount codes: the September launch promo
     // (BSTONESEPT - date-gated, open to anyone), the birthday code
@@ -143,65 +65,22 @@ export async function POST(request: Request) {
     // earned by picking a non-physical loyalty gift - see
     // src/lib/giftVoucher.ts), or a referral credit code (REF-xxxx, the
     // customer's own personal code, redeeming whatever ₦100 credits they've
-    // earned in the last 7 days - see src/lib/referral.ts). At most one
-    // applies per order.
+    // earned - see src/lib/referral.ts). At most one applies per order.
     let discountAmount = 0;
     let appliedDiscountCode: string | null = null;
     let appliedGiftVoucherCode: string | null = null;
     let referralCreditIds: string[] = [];
     let freeDeliveryFromVoucher = false;
     if (orderType === "retail" && discountCode) {
-      const code = discountCode.trim().toUpperCase();
-      if (code === PROMO.code) {
-        if (!isPromoActive()) {
-          return NextResponse.json({ error: "That code isn't active right now." }, { status: 400 });
-        }
-        discountAmount = Math.round((amountDue * PROMO.percent) / 100);
-        appliedDiscountCode = code;
-      } else if (code.startsWith("GIFT-")) {
-        const eligibility = await checkGiftVoucherEligibility(db, email, code);
-        if (!eligibility.eligible) {
-          return NextResponse.json(
-            { error: giftVoucherIneligibilityMessage(eligibility.reason) },
-            { status: 400 }
-          );
-        }
-        if (eligibility.voucher.type === "fixed_discount") {
-          discountAmount = Math.min(amountDue, eligibility.voucher.amount ?? 0);
-        } else {
-          freeDeliveryFromVoucher = true;
-        }
-        appliedDiscountCode = code;
-        appliedGiftVoucherCode = code;
-      } else if (code.startsWith("REF-")) {
-        const eligibility = await checkReferralCodeEligibility(db, email, code);
-        if (!eligibility.eligible) {
-          return NextResponse.json(
-            { error: referralCodeIneligibilityMessage(eligibility.reason) },
-            { status: 400 }
-          );
-        }
-        // Credits only come in whole ₦100 units, so spend as many as fit
-        // both the order total and the available balance - never partial.
-        const maxAffordable = Math.floor(amountDue / REFERRAL_CREDIT_AMOUNT);
-        const creditsToUse = eligibility.credits.slice(0, Math.min(maxAffordable, eligibility.credits.length));
-        if (creditsToUse.length === 0) {
-          return NextResponse.json(
-            { error: "Your order isn't large enough to use a ₦100 referral credit yet." },
-            { status: 400 }
-          );
-        }
-        discountAmount = creditsToUse.length * REFERRAL_CREDIT_AMOUNT;
-        referralCreditIds = creditsToUse.map((c) => c._id.toString());
-        appliedDiscountCode = code;
-      } else {
-        const eligibility = await checkBirthdayDiscountEligibility(db, email, discountCode);
-        if (!eligibility.eligible) {
-          return NextResponse.json({ error: discountIneligibilityMessage(eligibility.reason) }, { status: 400 });
-        }
-        discountAmount = Math.round((amountDue * BIRTHDAY_DISCOUNT_PERCENT) / 100);
-        appliedDiscountCode = code;
+      const resolved = await resolveDiscountCode(db, { orderType, email, discountCode, amountDue });
+      if (!resolved.ok) {
+        return NextResponse.json({ error: resolved.error }, { status: 400 });
       }
+      discountAmount = resolved.discountAmount;
+      appliedDiscountCode = resolved.appliedDiscountCode;
+      appliedGiftVoucherCode = resolved.appliedGiftVoucherCode;
+      referralCreditIds = resolved.referralCreditIds;
+      freeDeliveryFromVoucher = resolved.freeDeliveryFromVoucher;
       amountDue -= discountAmount;
     }
 

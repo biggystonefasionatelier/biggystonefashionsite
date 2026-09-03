@@ -19,6 +19,11 @@ function zoneOptionLabel(zone: DeliveryZone): string {
   return `${preview}${extra} — ₦${zone.fee.toLocaleString()} (${zone.eta})`;
 }
 
+type DiscountPreviewState = {
+  status: "idle" | "loading" | "applied" | "error";
+  message: string;
+};
+
 export default function CheckoutPage() {
   const { items, subtotal } = useCart();
   const [submitting, setSubmitting] = useState(false);
@@ -26,6 +31,12 @@ export default function CheckoutPage() {
   const [depositOnly, setDepositOnly] = useState(false);
   const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>("pickup");
   const [deliveryZone, setDeliveryZone] = useState(DELIVERY_ZONES[0].id);
+  const [email, setEmail] = useState("");
+  const [discountCode, setDiscountCode] = useState("");
+  const [discountPreview, setDiscountPreview] = useState<DiscountPreviewState>({
+    status: "idle",
+    message: "",
+  });
   const selectedZone = DELIVERY_ZONES.find((z) => z.id === deliveryZone);
 
   if (items.length === 0) {
@@ -49,6 +60,51 @@ export default function CheckoutPage() {
         )
       : 0;
 
+  async function handlePreviewDiscount() {
+    const code = discountCode.trim();
+    if (!code) {
+      setDiscountPreview({ status: "idle", message: "" });
+      return;
+    }
+    if (!email.trim()) {
+      setDiscountPreview({ status: "error", message: "Enter your email above first, then we can check this code." });
+      return;
+    }
+
+    setDiscountPreview({ status: "loading", message: "" });
+
+    try {
+      const res = await fetch("/api/checkout/preview-discount", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          orderType,
+          discountCode: code,
+          items: items.map((i) => ({ productId: i.productId, quantity: i.quantity, color: i.color })),
+        }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setDiscountPreview({ status: "error", message: data.error ?? "That code didn't work." });
+        return;
+      }
+
+      let message: string;
+      if (data.freeDelivery) {
+        message = "✓ Free delivery will be applied to this order.";
+      } else if (data.isReferral) {
+        message = `You have ₦${Number(data.referralBalance).toLocaleString()} available — ₦${Number(data.discountAmount).toLocaleString()} will be applied to this order.`;
+      } else {
+        message = `✓ ₦${Number(data.discountAmount).toLocaleString()} off will be applied to this order.`;
+      }
+      setDiscountPreview({ status: "applied", message });
+    } catch {
+      setDiscountPreview({ status: "error", message: "Network error. Couldn't check that code." });
+    }
+  }
+
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
@@ -62,13 +118,13 @@ export default function CheckoutPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           customerName: String(form.get("customerName") ?? ""),
-          email: String(form.get("email") ?? ""),
+          email,
           phone: String(form.get("phone") ?? ""),
           address: String(form.get("address") ?? ""),
           city: String(form.get("city") ?? ""),
           orderType,
           depositOnly,
-          discountCode: String(form.get("discountCode") ?? ""),
+          discountCode,
           deliveryMethod: orderType === "retail" ? deliveryMethod : undefined,
           deliveryZone: orderType === "retail" && deliveryMethod === "delivery" ? deliveryZone : undefined,
           deliveryNote: String(form.get("deliveryNote") ?? ""),
@@ -133,6 +189,8 @@ export default function CheckoutPage() {
           required
           maxLength={200}
           placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
           className="rounded-md border border-black/15 px-3 py-2 text-sm"
         />
         <input
@@ -170,12 +228,36 @@ export default function CheckoutPage() {
 
         {orderType === "retail" && (
           <>
-            <input
-              name="discountCode"
-              maxLength={50}
-              placeholder="Discount code (optional)"
-              className="rounded-md border border-black/15 px-3 py-2 text-sm uppercase placeholder:normal-case"
-            />
+            <div>
+              <div className="flex gap-2">
+                <input
+                  name="discountCode"
+                  maxLength={50}
+                  placeholder="Discount code (optional)"
+                  value={discountCode}
+                  onChange={(e) => {
+                    setDiscountCode(e.target.value.toUpperCase());
+                    setDiscountPreview({ status: "idle", message: "" });
+                  }}
+                  onBlur={handlePreviewDiscount}
+                  className="flex-1 rounded-md border border-black/15 px-3 py-2 text-sm uppercase placeholder:normal-case"
+                />
+                <button
+                  type="button"
+                  onClick={handlePreviewDiscount}
+                  disabled={discountPreview.status === "loading" || !discountCode.trim()}
+                  className="rounded-md border border-black/15 px-4 py-2 text-sm disabled:opacity-40"
+                >
+                  {discountPreview.status === "loading" ? "Checking..." : "Apply"}
+                </button>
+              </div>
+              {discountPreview.status === "applied" && (
+                <p className="mt-1 text-xs font-medium text-green-700">{discountPreview.message}</p>
+              )}
+              {discountPreview.status === "error" && (
+                <p className="mt-1 text-xs text-red-600">{discountPreview.message}</p>
+              )}
+            </div>
 
             <div className="rounded-md border border-black/15 p-3">
               <p className="text-xs font-medium text-neutral-700">Pickup or delivery?</p>
