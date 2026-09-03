@@ -321,11 +321,12 @@ export async function notifyOrderPaid(order: {
     .join("<br>");
 
   await sendAdminNotification(
-    `New paid order — ₦${order.total.toLocaleString()} (${order.customer_name})`,
-    `<p><strong>${order.customer_name}</strong> just paid for a ${order.order_type} order.</p>
+    `🛒 NEW ORDER — ₦${order.total.toLocaleString()} from ${order.customer_name}`,
+    `<p style="font-size:16px;"><strong>🛒 New ${order.order_type} order just paid for — ₦${order.total.toLocaleString()}</strong></p>
+     <p><strong>${order.customer_name}</strong></p>
      <p>Email: ${order.email}<br>Phone: ${order.phone}</p>
      <p>${itemsList}</p>
      <p><strong>Total: ₦${order.total.toLocaleString()}</strong></p>
-     <p><a href="${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/admin/orders">View in admin dashboard</a></p>`
+     <p><a href="${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/admin/orders" style="display:inline-block;margin-top:8px;padding:10px 20px;background:#111;color:#f5c453;text-decoration:none;border-radius:999px;">View in admin dashboard</a></p>`
   );
 }
