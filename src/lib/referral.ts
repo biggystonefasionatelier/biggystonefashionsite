@@ -1,19 +1,22 @@
 import type { Db } from "mongodb";
 import { ObjectId } from "mongodb";
 import { randomBytes } from "node:crypto";
+import { sendReferralCreditEmail } from "@/lib/brevo";
 
 /**
  * Refer-a-friend rewards: every signup gets a personal code. Share it as
  * a link (?ref=CODE) - when someone genuinely new signs up through it,
- * the referrer earns a ₦100 credit. Each credit is only valid for 7 days
- * from when it was earned (not a running account that never expires), and
- * the referrer redeems whatever's still valid by typing their own code in
- * as a discount code at checkout - reusing the existing checkout field
- * rather than a separate "my rewards" page, since there are no customer
- * accounts on this site.
+ * the referrer earns a ₦100 credit. The code itself (and everything
+ * earned through it, spent or not) expires 7 days after the REFERRER
+ * signed up - one fixed deadline per person, not a rolling per-credit
+ * timer, so it's simple to explain: "refer friends within your first
+ * week." The referrer redeems whatever's still valid by typing their own
+ * code in as a discount code at checkout - reusing the existing checkout
+ * field rather than a separate "my rewards" page, since there are no
+ * customer accounts on this site.
  */
 export const REFERRAL_CREDIT_AMOUNT = 100;
-export const REFERRAL_CREDIT_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+export const REFERRAL_CODE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const CODE_PREFIX = "REF-";
 
 export type ReferralCreditDoc = {
@@ -29,6 +32,15 @@ export type ReferralCreditDoc = {
 
 function generateCode(): string {
   return CODE_PREFIX + randomBytes(4).toString("hex").toUpperCase();
+}
+
+function isCodeExpired(signupCreatedAt: Date): boolean {
+  return Date.now() > signupCreatedAt.getTime() + REFERRAL_CODE_TTL_MS;
+}
+
+function daysRemaining(signupCreatedAt: Date): number {
+  const msLeft = signupCreatedAt.getTime() + REFERRAL_CODE_TTL_MS - Date.now();
+  return Math.max(0, Math.ceil(msLeft / (24 * 60 * 60 * 1000)));
 }
 
 /** Every signup should have one - generated once at signup time, but this
@@ -49,10 +61,12 @@ export async function ensureReferralCode(db: Db, email: string): Promise<string>
 }
 
 /**
- * Credits the referrer if `referralCode` is valid and belongs to someone
- * other than the person signing up. Silently does nothing on any invalid
- * input (bad code, self-referral) - a wrong/missing referral code should
- * never block someone from signing up.
+ * Credits the referrer if `referralCode` is valid, still within its
+ * 7-day window, and belongs to someone other than the person signing up.
+ * Silently does nothing on any invalid input (bad/expired code,
+ * self-referral) - a wrong referral code should never block someone from
+ * signing up. Emails the referrer a confirmation with their new balance
+ * on success (best-effort, doesn't throw).
  */
 export async function creditReferralIfValid(
   db: Db,
@@ -64,6 +78,7 @@ export async function creditReferralIfValid(
 
   const referrer = await db.collection("email_signups").findOne({ referral_code: code });
   if (!referrer || referrer.email === referredEmail) return;
+  if (isCodeExpired(referrer.created_at)) return;
 
   await db.collection<ReferralCreditDoc>("referral_credits").insertOne({
     referrer_email: referrer.email,
@@ -74,21 +89,33 @@ export async function creditReferralIfValid(
     used_at: null,
     used_order_id: null,
   } as ReferralCreditDoc);
+
+  const balance = await getBalance(db, referrer.email);
+  await sendReferralCreditEmail({
+    email: referrer.email,
+    name: referrer.name,
+    balance,
+    daysLeft: daysRemaining(referrer.created_at),
+    referralCode: code,
+  });
 }
 
-/** Oldest-first, so the credits closest to expiring get spent first. */
 export async function getAvailableCredits(db: Db, email: string): Promise<ReferralCreditDoc[]> {
-  const cutoff = new Date(Date.now() - REFERRAL_CREDIT_TTL_MS);
   return db
     .collection<ReferralCreditDoc>("referral_credits")
-    .find({ referrer_email: email, used: false, earned_at: { $gte: cutoff } })
+    .find({ referrer_email: email, used: false })
     .sort({ earned_at: 1 })
     .toArray();
 }
 
+export async function getBalance(db: Db, email: string): Promise<number> {
+  const credits = await getAvailableCredits(db, email);
+  return credits.reduce((sum, c) => sum + c.amount, 0);
+}
+
 export type ReferralCodeEligibility =
   | { eligible: true; credits: ReferralCreditDoc[] }
-  | { eligible: false; reason: "invalid_code" | "wrong_email" | "no_credit" };
+  | { eligible: false; reason: "invalid_code" | "wrong_email" | "code_expired" | "no_credit" };
 
 export async function checkReferralCodeEligibility(
   db: Db,
@@ -102,6 +129,9 @@ export async function checkReferralCodeEligibility(
   // this stays consistent with how that lookup already behaves.
   if (owner.email !== checkoutEmail.trim()) {
     return { eligible: false, reason: "wrong_email" };
+  }
+  if (isCodeExpired(owner.created_at)) {
+    return { eligible: false, reason: "code_expired" };
   }
 
   const credits = await getAvailableCredits(db, owner.email);
@@ -118,8 +148,10 @@ export function referralCodeIneligibilityMessage(
       return "That referral code isn't valid.";
     case "wrong_email":
       return "That referral code belongs to a different email address.";
+    case "code_expired":
+      return "This referral code has expired - codes and any credit earned through them are only valid for 7 days after signing up.";
     case "no_credit":
-      return "You don't have any referral credit available right now - it may have expired (credits last 7 days) or already been used.";
+      return "You don't have any referral credit available right now - it may already be used up.";
   }
 }
 

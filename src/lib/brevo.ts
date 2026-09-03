@@ -294,6 +294,37 @@ export async function sendReviewRequestEmail(params: { email: string; name: stri
   );
 }
 
+/**
+ * Sent to the referrer the instant someone signs up through their link -
+ * this is the only way a referrer finds out a referral actually worked,
+ * since there's no account/dashboard for customers to check. Called from
+ * src/lib/referral.ts right after a credit is recorded.
+ */
+export async function sendReferralCreditEmail(params: {
+  email: string;
+  name: string;
+  balance: number;
+  daysLeft: number;
+  referralCode: string;
+}): Promise<void> {
+  const firstName = params.name.trim().split(" ")[0] || params.name;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://biggystonefashion.com";
+
+  await sendCustomerEmail(
+    params.email,
+    `🎉 Someone joined using your link — you've earned ₦100`,
+    `<p>Hi ${firstName},</p>
+     <p>Great news — someone new just signed up using your referral link! You've
+     earned <strong>₦100</strong> credit.</p>
+     <p>Your current balance: <strong>₦${params.balance.toLocaleString()}</strong>
+     — valid for ${params.daysLeft} more day${params.daysLeft === 1 ? "" : "s"}.</p>
+     <p>Use it any time before then by entering your code at checkout:</p>
+     <p style="font-size:18px;font-weight:bold;letter-spacing:1px;">${params.referralCode}</p>
+     <p><a href="${siteUrl}/shop" style="display:inline-block;margin-top:8px;padding:10px 20px;background:#111;color:#f5c453;text-decoration:none;border-radius:999px;">Shop now</a></p>
+     <p style="margin-top:24px;">With love,<br>Faith, Founder — Biggystone Fashion Atelier</p>`
+  );
+}
+
 export async function sendGiftVoucherEmail(params: {
   email: string;
   customerName: string;
