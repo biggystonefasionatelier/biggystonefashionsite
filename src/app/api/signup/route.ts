@@ -56,17 +56,25 @@ export async function POST(request: Request) {
     // Only welcome brand-new signups - re-submitting the form to update
     // your birthday/phone shouldn't trigger a second welcome email or a
     // repeat referral credit for whoever referred them the first time.
+    let referralResult: Awaited<ReturnType<typeof creditReferralIfValid>> = { credited: false };
     if (isNewSignup) {
       await sendWelcomeEmail({ email, name, referralCode: myReferralCode });
       if (referralCode) {
-        await creditReferralIfValid(db, referralCode, email);
+        referralResult = await creditReferralIfValid(db, referralCode, email);
       }
     }
+
+    const referralLine = referralResult.credited
+      ? `<p>🔗 Referred by <strong>${referralResult.referrerName}</strong> (${referralResult.referrerEmail}) — ₦100 credited to them.</p>`
+      : referralCode
+        ? `<p>🔗 Signed up with a referral code (${referralCode}), but it wasn't valid/credited (expired, unknown, or self-referral).</p>`
+        : "";
 
     await sendAdminNotification(
       `New signup — ${name}`,
       `<p><strong>${name}</strong> joined the email/birthday list.</p>
        <p>Email: ${email}<br>Phone: ${phone}${birthday ? `<br>Birthday: ${birthday}` : ""}</p>
+       ${referralLine}
        <p><a href="${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/admin/signups">View in admin dashboard</a></p>`
     );
 

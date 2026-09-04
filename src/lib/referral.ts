@@ -30,8 +30,11 @@ export type ReferralCreditDoc = {
   used_order_id: ObjectId | null;
 };
 
+// 6 hex chars (24 bits, ~16.7M combinations) is plenty for this scale and
+// keeps the shareable code/link short - collisions are still checked for
+// below regardless.
 function generateCode(): string {
-  return CODE_PREFIX + randomBytes(4).toString("hex").toUpperCase();
+  return CODE_PREFIX + randomBytes(3).toString("hex").toUpperCase();
 }
 
 function isCodeExpired(signupCreatedAt: Date): boolean {
@@ -60,25 +63,30 @@ export async function ensureReferralCode(db: Db, email: string): Promise<string>
   return code;
 }
 
+export type ReferralCreditResult =
+  | { credited: true; referrerName: string; referrerEmail: string }
+  | { credited: false };
+
 /**
  * Credits the referrer if `referralCode` is valid, still within its
  * 7-day window, and belongs to someone other than the person signing up.
  * Silently does nothing on any invalid input (bad/expired code,
  * self-referral) - a wrong referral code should never block someone from
  * signing up. Emails the referrer a confirmation with their new balance
- * on success (best-effort, doesn't throw).
+ * on success (best-effort, doesn't throw). Returns who was credited (if
+ * anyone) so the caller can reflect it in Faith's admin notification.
  */
 export async function creditReferralIfValid(
   db: Db,
   referralCode: string,
   referredEmail: string
-): Promise<void> {
+): Promise<ReferralCreditResult> {
   const code = referralCode.trim().toUpperCase();
-  if (!code) return;
+  if (!code) return { credited: false };
 
   const referrer = await db.collection("email_signups").findOne({ referral_code: code });
-  if (!referrer || referrer.email === referredEmail) return;
-  if (isCodeExpired(referrer.created_at)) return;
+  if (!referrer || referrer.email === referredEmail) return { credited: false };
+  if (isCodeExpired(referrer.created_at)) return { credited: false };
 
   await db.collection<ReferralCreditDoc>("referral_credits").insertOne({
     referrer_email: referrer.email,
@@ -98,6 +106,8 @@ export async function creditReferralIfValid(
     daysLeft: daysRemaining(referrer.created_at),
     referralCode: code,
   });
+
+  return { credited: true, referrerName: referrer.name, referrerEmail: referrer.email };
 }
 
 export async function getAvailableCredits(db: Db, email: string): Promise<ReferralCreditDoc[]> {

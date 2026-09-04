@@ -222,7 +222,10 @@ export async function sendWelcomeEmail(params: {
 }): Promise<void> {
   const firstName = params.name.trim().split(" ")[0] || params.name;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://biggystonefashion.com";
-  const referralLink = `${siteUrl}/?ref=${params.referralCode}`;
+  const referralLink = `${siteUrl}/r/${params.referralCode}`;
+  const whatsappShareHref = `https://wa.me/?text=${encodeURIComponent(
+    `can you help me get a discount by signing up?\n\n${referralLink}`
+  )}`;
 
   await sendCustomerEmail(
     params.email,
@@ -252,7 +255,9 @@ export async function sendWelcomeEmail(params: {
        someone new joins using it. Credit lasts 7 days, and you can use whatever's
        still valid by entering your code (<strong>${params.referralCode}</strong>)
        as a discount code at checkout.</p>
-       <p><a href="${referralLink}" style="word-break:break-all;">${referralLink}</a></p>
+       <p><a href="${whatsappShareHref}" style="display:inline-block;padding:10px 20px;background:#25D366;color:#fff;text-decoration:none;border-radius:999px;">Share on WhatsApp</a></p>
+       <p style="margin-top:8px;font-size:13px;color:#666;">Or copy your link:<br>
+       <a href="${referralLink}" style="word-break:break-all;">${referralLink}</a></p>
        <p style="margin-top:24px;">With love,<br>Faith, Founder — Biggystone Fashion Atelier</p>
      </div>`
   );
@@ -309,6 +314,10 @@ export async function sendReferralCreditEmail(params: {
 }): Promise<void> {
   const firstName = params.name.trim().split(" ")[0] || params.name;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://biggystonefashion.com";
+  const referralLink = `${siteUrl}/r/${params.referralCode}`;
+  const whatsappShareHref = `https://wa.me/?text=${encodeURIComponent(
+    `can you help me get a discount by signing up?\n\n${referralLink}`
+  )}`;
 
   await sendCustomerEmail(
     params.email,
@@ -321,6 +330,8 @@ export async function sendReferralCreditEmail(params: {
      <p>Use it any time before then by entering your code at checkout:</p>
      <p style="font-size:18px;font-weight:bold;letter-spacing:1px;">${params.referralCode}</p>
      <p><a href="${siteUrl}/shop" style="display:inline-block;margin-top:8px;padding:10px 20px;background:#111;color:#f5c453;text-decoration:none;border-radius:999px;">Shop now</a></p>
+     <p style="margin-top:20px;">Want more? Keep sharing your link:</p>
+     <p><a href="${whatsappShareHref}" style="display:inline-block;padding:10px 20px;background:#25D366;color:#fff;text-decoration:none;border-radius:999px;">Share on WhatsApp</a></p>
      <p style="margin-top:24px;">With love,<br>Faith, Founder — Biggystone Fashion Atelier</p>`
   );
 }
