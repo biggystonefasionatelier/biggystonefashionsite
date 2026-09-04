@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { REFERRAL_STORAGE_KEY } from "./ReferralCapture";
 
 type Status = "idle" | "submitting" | "success" | "error";
 
@@ -27,13 +28,21 @@ export default function SignupForm({
     const form = new FormData(e.currentTarget);
     const birthMonth = String(form.get("birthMonth") ?? "");
     const birthDay = String(form.get("birthDay") ?? "");
-    // Read straight from the URL rather than useSearchParams(), which
-    // would force this component's page tree into a Suspense boundary
-    // just to support a link parameter that's only read once, on submit.
-    const referralCode =
-      typeof window !== "undefined"
-        ? new URLSearchParams(window.location.search).get("ref") ?? ""
-        : "";
+    // Prefer a ?ref= still sitting in the current URL, but fall back to
+    // whatever ReferralCapture stashed in localStorage when they first
+    // landed - by the time someone actually fills this form out they've
+    // often browsed to another page, where the URL param is long gone.
+    let referralCode = "";
+    if (typeof window !== "undefined") {
+      referralCode = new URLSearchParams(window.location.search).get("ref") ?? "";
+      if (!referralCode) {
+        try {
+          referralCode = localStorage.getItem(REFERRAL_STORAGE_KEY) ?? "";
+        } catch {
+          // Corrupt/blocked storage - just proceed without a referral code.
+        }
+      }
+    }
     const payload = {
       name: String(form.get("name") ?? ""),
       email: String(form.get("email") ?? ""),
