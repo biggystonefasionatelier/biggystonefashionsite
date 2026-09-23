@@ -36,12 +36,12 @@ export async function POST(request: Request) {
     );
   }
 
-  const { email, orderType, items, discountCode } = parsed.data;
+  const { email, orderType, items, discountCode, depositOnly } = parsed.data;
 
   try {
     const db = await getDb();
 
-    const cart = await resolveCart(db, { orderType, items });
+    const cart = await resolveCart(db, { orderType, items, depositOnly });
     if (!cart.ok) {
       return NextResponse.json({ error: cart.error }, { status: 400 });
     }
@@ -51,6 +51,7 @@ export async function POST(request: Request) {
       email,
       discountCode,
       amountDue: cart.amountDue,
+      total: cart.total,
     });
     if (!resolved.ok) {
       return NextResponse.json({ error: resolved.error }, { status: 400 });

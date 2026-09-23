@@ -58,21 +58,23 @@ export async function POST(request: Request) {
     const { orderItems, total, bundleDiscount } = cart;
     let amountDue = cart.amountDue;
 
-    // Four possible retail discount codes: the September launch promo
-    // (BSTONESEPT - date-gated, open to anyone), the birthday code
-    // (BSTONEBDAY - checked against the customer's signup record, see
+    // Five possible discount codes: the September launch promo (BSTONESEPT
+    // - date-gated, open to anyone), the birthday code (BSTONEBDAY -
+    // checked against the customer's signup record, see
     // src/lib/discount.ts), a one-time gift voucher code (GIFT-xxxx,
     // earned by picking a non-physical loyalty gift - see
-    // src/lib/giftVoucher.ts), or a referral credit code (REF-xxxx, the
-    // customer's own personal code, redeeming whatever ₦100 credits they've
-    // earned - see src/lib/referral.ts). At most one applies per order.
+    // src/lib/giftVoucher.ts), a referral credit code (REF-xxxx, the
+    // customer's own personal code, redeeming whatever ₦100 credits
+    // they've earned - see src/lib/referral.ts), or the wholesale reseller
+    // code (BSTONEWHOLESALE - the only one that applies to wholesale
+    // orders instead of retail). At most one applies per order.
     let discountAmount = 0;
     let appliedDiscountCode: string | null = null;
     let appliedGiftVoucherCode: string | null = null;
     let referralCreditIds: string[] = [];
     let freeDeliveryFromVoucher = false;
-    if (orderType === "retail" && discountCode) {
-      const resolved = await resolveDiscountCode(db, { orderType, email, discountCode, amountDue });
+    if (discountCode) {
+      const resolved = await resolveDiscountCode(db, { orderType, email, discountCode, amountDue, total });
       if (!resolved.ok) {
         return NextResponse.json({ error: resolved.error }, { status: 400 });
       }

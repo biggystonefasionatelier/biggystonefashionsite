@@ -54,6 +54,7 @@ export const previewDiscountSchema = z.object({
   orderType: z.enum(["retail", "wholesale"]),
   items: z.array(cartItemSchema).min(1, "Cart is empty"),
   discountCode: z.string().trim().min(1).max(50),
+  depositOnly: z.boolean().optional().default(false),
 });
 
 export const claimGiftSchema = z.object({

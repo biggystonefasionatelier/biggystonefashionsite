@@ -22,6 +22,7 @@ function zoneOptionLabel(zone: DeliveryZone): string {
 type DiscountPreviewState = {
   status: "idle" | "loading" | "applied" | "error";
   message: string;
+  amount: number;
 };
 
 export default function CheckoutPage() {
@@ -36,6 +37,7 @@ export default function CheckoutPage() {
   const [discountPreview, setDiscountPreview] = useState<DiscountPreviewState>({
     status: "idle",
     message: "",
+    amount: 0,
   });
   const selectedZone = DELIVERY_ZONES.find((z) => z.id === deliveryZone);
 
@@ -63,15 +65,15 @@ export default function CheckoutPage() {
   async function handlePreviewDiscount() {
     const code = discountCode.trim();
     if (!code) {
-      setDiscountPreview({ status: "idle", message: "" });
+      setDiscountPreview({ status: "idle", message: "", amount: 0 });
       return;
     }
     if (!email.trim()) {
-      setDiscountPreview({ status: "error", message: "Enter your email above first, then we can check this code." });
+      setDiscountPreview({ status: "error", message: "Enter your email above first, then we can check this code.", amount: 0 });
       return;
     }
 
-    setDiscountPreview({ status: "loading", message: "" });
+    setDiscountPreview({ status: "loading", message: "", amount: 0 });
 
     try {
       const res = await fetch("/api/checkout/preview-discount", {
@@ -81,13 +83,14 @@ export default function CheckoutPage() {
           email,
           orderType,
           discountCode: code,
+          depositOnly,
           items: items.map((i) => ({ productId: i.productId, quantity: i.quantity, color: i.color })),
         }),
       });
       const data = await res.json();
 
       if (!res.ok) {
-        setDiscountPreview({ status: "error", message: data.error ?? "That code didn't work." });
+        setDiscountPreview({ status: "error", message: data.error ?? "That code didn't work.", amount: 0 });
         return;
       }
 
@@ -99,9 +102,9 @@ export default function CheckoutPage() {
       } else {
         message = `✓ ₦${Number(data.discountAmount).toLocaleString()} off will be applied to this order.`;
       }
-      setDiscountPreview({ status: "applied", message });
+      setDiscountPreview({ status: "applied", message, amount: Number(data.discountAmount) || 0 });
     } catch {
-      setDiscountPreview({ status: "error", message: "Network error. Couldn't check that code." });
+      setDiscountPreview({ status: "error", message: "Network error. Couldn't check that code.", amount: 0 });
     }
   }
 
@@ -174,6 +177,11 @@ export default function CheckoutPage() {
           📦 Buy-3 bundle discount applied — ₦{bundleDiscount.toLocaleString()} off
         </p>
       )}
+      {discountPreview.status === "applied" && discountPreview.amount > 0 && (
+        <p className="mt-1 text-sm font-medium text-green-700">
+          − ₦{discountPreview.amount.toLocaleString()} discount ({discountCode})
+        </p>
+      )}
 
       <form onSubmit={handleSubmit} className="mt-6 grid gap-3">
         <input
@@ -228,37 +236,6 @@ export default function CheckoutPage() {
 
         {orderType === "retail" && (
           <>
-            <div>
-              <div className="flex gap-2">
-                <input
-                  name="discountCode"
-                  maxLength={50}
-                  placeholder="Discount code (optional)"
-                  value={discountCode}
-                  onChange={(e) => {
-                    setDiscountCode(e.target.value.toUpperCase());
-                    setDiscountPreview({ status: "idle", message: "" });
-                  }}
-                  onBlur={handlePreviewDiscount}
-                  className="flex-1 rounded-md border border-black/15 px-3 py-2 text-sm uppercase placeholder:normal-case"
-                />
-                <button
-                  type="button"
-                  onClick={handlePreviewDiscount}
-                  disabled={discountPreview.status === "loading" || !discountCode.trim()}
-                  className="rounded-md border border-black/15 px-4 py-2 text-sm disabled:opacity-40"
-                >
-                  {discountPreview.status === "loading" ? "Checking..." : "Apply"}
-                </button>
-              </div>
-              {discountPreview.status === "applied" && (
-                <p className="mt-1 text-xs font-medium text-green-700">{discountPreview.message}</p>
-              )}
-              {discountPreview.status === "error" && (
-                <p className="mt-1 text-xs text-red-600">{discountPreview.message}</p>
-              )}
-            </div>
-
             <div className="rounded-md border border-black/15 p-3">
               <p className="text-xs font-medium text-neutral-700">Pickup or delivery?</p>
               <div className="mt-2 grid gap-2 text-sm">
@@ -318,6 +295,46 @@ export default function CheckoutPage() {
           </>
         )}
 
+        {/* Discount code - available for both retail (birthday/promo/gift/
+            referral codes) and wholesale (the BSTONEWHOLESALE reseller
+            code) checkouts, so it lives here rather than inside either
+            order-type-specific block above. */}
+        <div>
+          <label className="block text-xs text-neutral-500" htmlFor="checkout-discount-code">
+            Discount code
+          </label>
+          <div className="mt-1 flex gap-2">
+            <input
+              id="checkout-discount-code"
+              name="discountCode"
+              maxLength={50}
+              placeholder="Discount code (optional)"
+              value={discountCode}
+              onChange={(e) => {
+                setDiscountCode(e.target.value.toUpperCase());
+                setDiscountPreview({ status: "idle", message: "", amount: 0 });
+              }}
+              onBlur={handlePreviewDiscount}
+              className="flex-1 rounded-md border border-black/15 px-3 py-2 text-sm uppercase placeholder:normal-case"
+            />
+            <button
+              type="button"
+              onClick={handlePreviewDiscount}
+              disabled={discountPreview.status === "loading" || !discountCode.trim()}
+              className="rounded-md border border-black/15 px-4 py-2 text-sm disabled:opacity-40"
+            >
+              {discountPreview.status === "loading" ? "Checking..." : "Apply"}
+            </button>
+          </div>
+          {discountPreview.status === "applied" && (
+            <p className="mt-1 text-xs font-medium text-green-700">{discountPreview.message}</p>
+          )}
+          {discountPreview.status === "error" && (
+            <p className="mt-1 text-xs text-red-600">{discountPreview.message}</p>
+          )}
+        </div>
+
+        {/* Payment */}
         <p className="text-xs text-neutral-500">
           By placing this order, you agree to our{" "}
           <Link href="/terms" className="underline">

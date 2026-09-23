@@ -15,6 +15,15 @@ import {
 import { calculateBundleDiscount } from "@/lib/bundleDiscount";
 import { PROMO, isPromoActive } from "@/lib/promo";
 
+// Manually distributed by Faith to approved resellers - the one discount
+// code that applies to wholesale orders instead of retail, since every
+// other code below is a retail customer-loyalty thing (birthday, referral,
+// gift, promo). Not tied to any customer record, so there's no
+// eligibility lookup - just the code, and a minimum order size.
+export const WHOLESALE_DISCOUNT_CODE = "BSTONEWHOLESALE";
+export const WHOLESALE_DISCOUNT_PERCENT = 25;
+export const WHOLESALE_MIN_ORDER = 10000;
+
 /**
  * Shared between /api/checkout/initialize (the real, payment-creating
  * route) and /api/checkout/preview-discount (a read-only "what would this
@@ -123,15 +132,45 @@ export type ResolvedDiscount =
 
 export async function resolveDiscountCode(
   db: Db,
-  params: { orderType: "retail" | "wholesale"; email: string; discountCode: string; amountDue: number }
+  params: {
+    orderType: "retail" | "wholesale";
+    email: string;
+    discountCode: string;
+    amountDue: number;
+    total: number;
+  }
 ): Promise<ResolvedDiscount> {
-  const { orderType, email, amountDue } = params;
+  const { orderType, email, amountDue, total } = params;
+
+  const code = params.discountCode.trim().toUpperCase();
+
+  if (code === WHOLESALE_DISCOUNT_CODE) {
+    if (orderType !== "wholesale") {
+      return { ok: false, error: "This code is only valid for pre-order wholesale purchases." };
+    }
+    // Checked against the full order value (total), not what's due today -
+    // a deposit-only checkout would otherwise let a large order sneak
+    // through on a small deposit amount.
+    if (total < WHOLESALE_MIN_ORDER) {
+      return {
+        ok: false,
+        error: `This code needs a minimum order of ₦${WHOLESALE_MIN_ORDER.toLocaleString()} (your order is ₦${total.toLocaleString()}).`,
+      };
+    }
+    return {
+      ok: true,
+      discountAmount: Math.round((amountDue * WHOLESALE_DISCOUNT_PERCENT) / 100),
+      appliedDiscountCode: code,
+      appliedGiftVoucherCode: null,
+      referralCreditIds: [],
+      freeDeliveryFromVoucher: false,
+      referralBalance: null,
+    };
+  }
 
   if (orderType !== "retail") {
     return { ok: false, error: "Discount codes only apply to retail orders." };
   }
-
-  const code = params.discountCode.trim().toUpperCase();
 
   if (code === PROMO.code) {
     if (!isPromoActive()) {
