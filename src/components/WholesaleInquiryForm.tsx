@@ -4,7 +4,10 @@ import { useState, type FormEvent } from "react";
 
 type Status = "idle" | "submitting" | "success" | "error";
 
-const PRE_ORDER_LANDING_URL = "https://shop.biggystonefashion.com";
+// Same business number as the site-wide WhatsApp button. No number-less
+// wa.me link here (that opens a contact picker) - this one goes straight
+// to Faith, since it's an inquiry meant for her specifically.
+const WHATSAPP_NUMBER = "2348148263705";
 
 export default function WholesaleInquiryForm() {
   const [status, setStatus] = useState<Status>("idle");
@@ -40,12 +43,24 @@ export default function WholesaleInquiryForm() {
       }
 
       setStatus("success");
+      // Send the actual inquiry straight to Faith's WhatsApp, pre-filled,
+      // so she can respond from her phone immediately instead of waiting
+      // to check email/admin - the whole point of this over the old
+      // Telegram redirect, which didn't get her the details at all.
+      const whatsappMessage = [
+        `Hi Biggystone! I'm interested in wholesale.`,
+        `Name: ${payload.name}`,
+        payload.businessName ? `Business: ${payload.businessName}` : null,
+        `Quantity interested: ${payload.quantityInterested}`,
+        payload.message ? `Note: ${payload.message}` : null,
+      ]
+        .filter(Boolean)
+        .join("\n");
+      const whatsappHref = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(whatsappMessage)}`;
+
       (e.target as HTMLFormElement).reset();
-      // Send them straight into the pre-order Telegram circle while
-      // they're a hot lead, right after the enquiry goes through - a
-      // short pause so they still see the confirmation before leaving.
       setTimeout(() => {
-        window.location.href = PRE_ORDER_LANDING_URL;
+        window.location.href = whatsappHref;
       }, 1500);
     } catch {
       setErrorMsg("Network error. Check your connection and try again.");
@@ -56,8 +71,8 @@ export default function WholesaleInquiryForm() {
   if (status === "success") {
     return (
       <p className="rounded-lg bg-brand-gold-light/40 p-4 text-sm text-neutral-800">
-        Got it — Taking you to our pre-order circle now for the pricing and
-        next steps.
+        Got it — opening WhatsApp so you can send us your details directly
+        for a quick reply.
       </p>
     );
   }
