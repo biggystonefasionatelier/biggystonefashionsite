@@ -63,15 +63,10 @@ export async function getProducts(
 ): Promise<Product[]> {
   try {
     const db = await getDb();
-    // Retail pieces sell out for good - once stock hits 0, hide it from the
-    // shop instead of showing a disabled "Out of stock" card, so customers
-    // never pick something they can't actually buy. Pre-order wholesale
-    // pieces are made/sourced to order, so stock doesn't mean the same thing
-    // there and isn't filtered.
-    const filter: Record<string, unknown> = { product_type: productType, active: true };
-    if (productType === "retail") filter.stock = { $gt: 0 };
-
-    let cursor = db.collection<ProductDoc>("products").find(filter).sort({ created_at: -1 });
+    let cursor = db
+      .collection<ProductDoc>("products")
+      .find({ product_type: productType, active: true })
+      .sort({ created_at: -1 });
 
     if (limit) cursor = cursor.limit(limit);
 
