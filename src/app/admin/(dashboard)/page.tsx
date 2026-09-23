@@ -8,7 +8,13 @@ type Stats = {
   totalSignups: number;
   totalInquiries: number;
   totalProducts: number;
+  inventoryValue: number;
+  amountSold: number;
 };
+
+// Orders in these statuses count as sold - paid but not yet marked fulfilled
+// still represents money actually taken, so both count toward revenue.
+const SOLD_STATUSES = new Set(["paid", "fulfilled"]);
 
 export default function AdminOverviewPage() {
   const [stats, setStats] = useState<Stats | null>(null);
@@ -22,13 +28,20 @@ export default function AdminOverviewPage() {
         fetch("/api/admin/products").then((r) => r.json()),
       ]);
 
-      const orders = ordersRes.orders ?? [];
+      const orders: { status: string; total: number }[] = ordersRes.orders ?? [];
+      const products: { price: number; stock: number; active: boolean }[] =
+        productsRes.products ?? [];
+
       setStats({
         totalOrders: orders.length,
-        paidOrders: orders.filter((o: { status: string }) => o.status === "paid").length,
+        paidOrders: orders.filter((o) => o.status === "paid").length,
         totalSignups: (signupsRes.signups ?? []).length,
         totalInquiries: (inquiriesRes.inquiries ?? []).length,
-        totalProducts: (productsRes.products ?? []).length,
+        totalProducts: products.length,
+        inventoryValue: products.reduce((sum, p) => sum + p.price * p.stock, 0),
+        amountSold: orders
+          .filter((o) => SOLD_STATUSES.has(o.status))
+          .reduce((sum, o) => sum + Number(o.total), 0),
       });
     }
     load();
@@ -36,6 +49,8 @@ export default function AdminOverviewPage() {
 
   const cards = stats
     ? [
+        { label: "Total product amount (stock value)", value: `₦${stats.inventoryValue.toLocaleString()}` },
+        { label: "Amount sold", value: `₦${stats.amountSold.toLocaleString()}` },
         { label: "Total orders", value: stats.totalOrders },
         { label: "Paid orders", value: stats.paidOrders },
         { label: "Email/birthday signups", value: stats.totalSignups },
