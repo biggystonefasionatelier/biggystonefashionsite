@@ -6,12 +6,24 @@ import type { Product } from "@/lib/products";
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[] | null>(null);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     fetch("/api/admin/products")
       .then((r) => r.json())
       .then((data) => setProducts(data.products ?? []));
   }, []);
+
+  const query = search.trim().toLowerCase();
+  const filtered =
+    products && query
+      ? products.filter(
+          (p) =>
+            p.name.toLowerCase().includes(query) ||
+            (p.category ?? "").toLowerCase().includes(query) ||
+            (p.slug ?? "").toLowerCase().includes(query)
+        )
+      : products;
 
   return (
     <div>
@@ -25,10 +37,32 @@ export default function AdminProductsPage() {
         </Link>
       </div>
 
+      {products && products.length > 0 && (
+        <div className="mt-4">
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search products by name or category..."
+            className="w-full max-w-sm rounded-md border border-black/15 px-3 py-2 text-sm"
+          />
+          {query && (
+            <p className="mt-1 text-xs text-neutral-500">
+              {filtered?.length ?? 0} of {products.length} product
+              {products.length === 1 ? "" : "s"}
+            </p>
+          )}
+        </div>
+      )}
+
       {!products ? (
         <p className="mt-6 text-sm text-neutral-500">Loading...</p>
       ) : products.length === 0 ? (
         <p className="mt-6 text-sm text-neutral-500">No products yet.</p>
+      ) : filtered && filtered.length === 0 ? (
+        <p className="mt-6 text-sm text-neutral-500">
+          No products match &quot;{search.trim()}&quot;.
+        </p>
       ) : (
         <div className="mt-6 overflow-x-auto rounded-xl border border-black/10 bg-white">
           <table className="w-full text-left text-sm">
@@ -43,7 +77,7 @@ export default function AdminProductsPage() {
               </tr>
             </thead>
             <tbody>
-              {products.map((p) => (
+              {(filtered ?? []).map((p) => (
                 <tr key={p.id} className="border-b border-black/5 last:border-0">
                   <td className="px-4 py-3">{p.name}</td>
                   <td className="px-4 py-3 capitalize">{p.product_type}</td>
