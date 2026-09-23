@@ -17,7 +17,7 @@ export default function Footer() {
             <p className="font-bold text-neutral-900">Shop</p>
             <ul className="mt-2 space-y-1">
               <li><Link href="/shop" className="hover:underline">Retail</Link></li>
-              <li><Link href="/wholesale" className="hover:underline">Pre-Order Wholesale</Link></li>
+              <li><Link href="/wholesale" className="hover:underline">Wholesale</Link></li>
               <li><Link href="/delivery" className="hover:underline">Delivery & Returns</Link></li>
             </ul>
           </div>
