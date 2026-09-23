@@ -24,6 +24,7 @@ export const wholesaleInquirySchema = z.object({
   email: z.string().trim().email().max(200),
   phone: z.string().trim().min(7).max(20),
   businessName: z.string().trim().max(150).optional().or(z.literal("")),
+  interestType: z.enum(["wholesale", "pre_order"]),
   quantityInterested: z.string().trim().max(100),
   message: z.string().trim().max(1000).optional().or(z.literal("")),
 });

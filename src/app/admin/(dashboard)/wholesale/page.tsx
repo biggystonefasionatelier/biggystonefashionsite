@@ -8,10 +8,17 @@ type Inquiry = {
   email: string;
   phone: string;
   business_name: string | null;
+  interest_type?: "wholesale" | "pre_order";
   quantity_interested: string;
   message: string | null;
   created_at: string;
 };
+
+function interestLabel(type: Inquiry["interest_type"]): string {
+  if (type === "pre_order") return "Pre-Order Wholesale";
+  if (type === "wholesale") return "Wholesale (available pieces)";
+  return "Not specified";
+}
 
 export default function AdminWholesalePage() {
   const [inquiries, setInquiries] = useState<Inquiry[] | null>(null);
@@ -34,9 +41,20 @@ export default function AdminWholesalePage() {
         <div className="mt-6 space-y-4">
           {inquiries.map((inq) => (
             <div key={inq.id} className="rounded-xl border border-black/10 bg-white p-4">
-              <p className="font-medium">
-                {inq.name} {inq.business_name && `— ${inq.business_name}`}
-              </p>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="font-medium">
+                  {inq.name} {inq.business_name && `— ${inq.business_name}`}
+                </p>
+                <span
+                  className={`rounded-full px-3 py-1 text-xs font-medium ${
+                    inq.interest_type === "pre_order"
+                      ? "bg-brand-gold-light text-neutral-800"
+                      : "bg-neutral-100 text-neutral-700"
+                  }`}
+                >
+                  {interestLabel(inq.interest_type)}
+                </span>
+              </div>
               <p className="text-xs text-neutral-500">
                 {inq.email} · {inq.phone}
               </p>

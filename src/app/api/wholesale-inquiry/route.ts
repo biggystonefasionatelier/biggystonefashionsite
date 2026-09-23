@@ -36,14 +36,18 @@ export async function POST(request: Request) {
       email: parsed.data.email,
       phone: parsed.data.phone,
       business_name: parsed.data.businessName || null,
+      interest_type: parsed.data.interestType,
       quantity_interested: parsed.data.quantityInterested,
       message: parsed.data.message || null,
       created_at: new Date(),
     });
 
+    const interestLabel =
+      parsed.data.interestType === "wholesale" ? "Wholesale (available pieces)" : "Pre-Order Wholesale";
+
     await sendAdminNotification(
       `New wholesale inquiry — ${parsed.data.name}`,
-      `<p><strong>${parsed.data.name}</strong>${parsed.data.businessName ? ` (${parsed.data.businessName})` : ""} is interested in wholesale.</p>
+      `<p><strong>${parsed.data.name}</strong>${parsed.data.businessName ? ` (${parsed.data.businessName})` : ""} is interested in <strong>${interestLabel}</strong>.</p>
        <p>Email: ${parsed.data.email}<br>Phone: ${parsed.data.phone}<br>Quantity: ${parsed.data.quantityInterested}</p>
        ${parsed.data.message ? `<p>Message: ${parsed.data.message}</p>` : ""}
        <p><a href="${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/admin/wholesale">View in admin dashboard</a></p>`

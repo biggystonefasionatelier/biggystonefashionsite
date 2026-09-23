@@ -24,6 +24,7 @@ export default function WholesaleInquiryForm() {
       email: String(form.get("email") ?? ""),
       phone: String(form.get("phone") ?? ""),
       businessName: String(form.get("businessName") ?? ""),
+      interestType: String(form.get("interestType") ?? "wholesale"),
       quantityInterested: String(form.get("quantityInterested") ?? ""),
       message: String(form.get("message") ?? ""),
     };
@@ -51,6 +52,7 @@ export default function WholesaleInquiryForm() {
         `Hi Biggystone! I'm interested in wholesale.`,
         `Name: ${payload.name}`,
         payload.businessName ? `Business: ${payload.businessName}` : null,
+        `Interested in: ${payload.interestType === "wholesale" ? "Wholesale (available pieces)" : "Pre-Order Wholesale"}`,
         `Quantity interested: ${payload.quantityInterested}`,
         payload.message ? `Note: ${payload.message}` : null,
       ]
@@ -107,6 +109,21 @@ export default function WholesaleInquiryForm() {
         placeholder="Business name (optional)"
         className="rounded-md border border-black/15 px-3 py-2 text-sm"
       />
+      <div className="rounded-md border border-black/15 p-3 text-sm sm:col-span-2">
+        <p className="text-xs font-medium text-neutral-700">
+          Which are you interested in?
+        </p>
+        <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:gap-6">
+          <label className="flex items-center gap-2">
+            <input type="radio" name="interestType" value="wholesale" defaultChecked required />
+            Wholesale (available pieces)
+          </label>
+          <label className="flex items-center gap-2">
+            <input type="radio" name="interestType" value="pre_order" required />
+            Pre-Order Wholesale
+          </label>
+        </div>
+      </div>
       <input
         name="quantityInterested"
         required
