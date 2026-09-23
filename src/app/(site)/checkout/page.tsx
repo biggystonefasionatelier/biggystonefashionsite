@@ -295,44 +295,46 @@ export default function CheckoutPage() {
           </>
         )}
 
-        {/* Discount code - available for both retail (birthday/promo/gift/
-            referral codes) and wholesale (the BSTONEWHOLESALE reseller
-            code) checkouts, so it lives here rather than inside either
-            order-type-specific block above. */}
-        <div>
-          <label className="block text-xs text-neutral-500" htmlFor="checkout-discount-code">
-            Discount code
-          </label>
-          <div className="mt-1 flex gap-2">
-            <input
-              id="checkout-discount-code"
-              name="discountCode"
-              maxLength={50}
-              placeholder="Discount code (optional)"
-              value={discountCode}
-              onChange={(e) => {
-                setDiscountCode(e.target.value.toUpperCase());
-                setDiscountPreview({ status: "idle", message: "", amount: 0 });
-              }}
-              onBlur={handlePreviewDiscount}
-              className="flex-1 rounded-md border border-black/15 px-3 py-2 text-sm uppercase placeholder:normal-case"
-            />
-            <button
-              type="button"
-              onClick={handlePreviewDiscount}
-              disabled={discountPreview.status === "loading" || !discountCode.trim()}
-              className="rounded-md border border-black/15 px-4 py-2 text-sm disabled:opacity-40"
-            >
-              {discountPreview.status === "loading" ? "Checking..." : "Apply"}
-            </button>
+        {/* Discount code - retail only (BSTONEWHOLESALE included: resellers
+            buy from the same retail catalog everyone else does, just in
+            bulk, so it runs through this same retail checkout rather than
+            the separate dormant "wholesale" product type). */}
+        {orderType === "retail" && (
+          <div>
+            <label className="block text-xs text-neutral-500" htmlFor="checkout-discount-code">
+              Discount code
+            </label>
+            <div className="mt-1 flex gap-2">
+              <input
+                id="checkout-discount-code"
+                name="discountCode"
+                maxLength={50}
+                placeholder="Discount code (optional)"
+                value={discountCode}
+                onChange={(e) => {
+                  setDiscountCode(e.target.value.toUpperCase());
+                  setDiscountPreview({ status: "idle", message: "", amount: 0 });
+                }}
+                onBlur={handlePreviewDiscount}
+                className="flex-1 rounded-md border border-black/15 px-3 py-2 text-sm uppercase placeholder:normal-case"
+              />
+              <button
+                type="button"
+                onClick={handlePreviewDiscount}
+                disabled={discountPreview.status === "loading" || !discountCode.trim()}
+                className="rounded-md border border-black/15 px-4 py-2 text-sm disabled:opacity-40"
+              >
+                {discountPreview.status === "loading" ? "Checking..." : "Apply"}
+              </button>
+            </div>
+            {discountPreview.status === "applied" && (
+              <p className="mt-1 text-xs font-medium text-green-700">{discountPreview.message}</p>
+            )}
+            {discountPreview.status === "error" && (
+              <p className="mt-1 text-xs text-red-600">{discountPreview.message}</p>
+            )}
           </div>
-          {discountPreview.status === "applied" && (
-            <p className="mt-1 text-xs font-medium text-green-700">{discountPreview.message}</p>
-          )}
-          {discountPreview.status === "error" && (
-            <p className="mt-1 text-xs text-red-600">{discountPreview.message}</p>
-          )}
-        </div>
+        )}
 
         {/* Payment */}
         <p className="text-xs text-neutral-500">

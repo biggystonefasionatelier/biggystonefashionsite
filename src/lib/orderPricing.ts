@@ -15,11 +15,13 @@ import {
 import { calculateBundleDiscount } from "@/lib/bundleDiscount";
 import { PROMO, isPromoActive } from "@/lib/promo";
 
-// Manually distributed by Faith to approved resellers - the one discount
-// code that applies to wholesale orders instead of retail, since every
-// other code below is a retail customer-loyalty thing (birthday, referral,
-// gift, promo). Not tied to any customer record, so there's no
-// eligibility lookup - just the code, and a minimum order size.
+// Manually distributed by Faith to approved resellers. Runs through the
+// same retail catalog and checkout as everyone else - resellers pick the
+// same photographed products, just in bulk - so unlike the dormant
+// "wholesale" product type (MOQ/deposit, no products currently use it),
+// this code doesn't need its own product listing. Not tied to any
+// customer record either, so there's no eligibility lookup - just the
+// code, and a minimum order size.
 export const WHOLESALE_DISCOUNT_CODE = "BSTONEWHOLESALE";
 export const WHOLESALE_DISCOUNT_PERCENT = 25;
 export const WHOLESALE_MIN_ORDER = 10000;
@@ -144,13 +146,16 @@ export async function resolveDiscountCode(
 
   const code = params.discountCode.trim().toUpperCase();
 
+  // Every discount code, including the wholesale reseller one, runs
+  // through the retail catalog and checkout - resellers buy the exact
+  // same photographed products everyone else does, just in bulk, with
+  // this code applying the wholesale price instead of a separate
+  // wholesale-only product listing.
+  if (orderType !== "retail") {
+    return { ok: false, error: "Discount codes only apply to retail orders." };
+  }
+
   if (code === WHOLESALE_DISCOUNT_CODE) {
-    if (orderType !== "wholesale") {
-      return { ok: false, error: "This code is only valid for pre-order wholesale purchases." };
-    }
-    // Checked against the full order value (total), not what's due today -
-    // a deposit-only checkout would otherwise let a large order sneak
-    // through on a small deposit amount.
     if (total < WHOLESALE_MIN_ORDER) {
       return {
         ok: false,
