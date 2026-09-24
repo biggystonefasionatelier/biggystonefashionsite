@@ -49,3 +49,22 @@ export async function PATCH(
     return NextResponse.json({ error: "Failed to update order" }, { status: 500 });
   }
 }
+
+export async function DELETE(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  if (!ObjectId.isValid(id)) {
+    return NextResponse.json({ error: "Invalid order ID" }, { status: 400 });
+  }
+
+  try {
+    const db = await getDb();
+    await db.collection("orders").deleteOne({ _id: new ObjectId(id) });
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    console.error("Admin order delete failed:", err);
+    return NextResponse.json({ error: "Failed to delete order" }, { status: 500 });
+  }
+}
