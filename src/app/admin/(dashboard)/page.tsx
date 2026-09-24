@@ -11,6 +11,7 @@ type Stats = {
   inventoryValue: number;
   amountSold: number;
   piecesSold: number;
+  soldOutProducts: number;
 };
 
 // Orders in these statuses count as sold - paid but not yet marked fulfilled
@@ -43,6 +44,7 @@ export default function AdminOverviewPage() {
         totalSignups: (signupsRes.signups ?? []).length,
         totalInquiries: (inquiriesRes.inquiries ?? []).length,
         totalProducts: products.length,
+        soldOutProducts: products.filter((p) => p.stock <= 0).length,
         inventoryValue: products.reduce((sum, p) => sum + p.price * p.stock, 0),
         amountSold: orders
           .filter((o) => SOLD_STATUSES.has(o.status))
@@ -68,6 +70,7 @@ export default function AdminOverviewPage() {
         { label: "Email/birthday signups", value: stats.totalSignups },
         { label: "Wholesale inquiries", value: stats.totalInquiries },
         { label: "Products listed", value: stats.totalProducts },
+        { label: "Sold out", value: stats.soldOutProducts },
       ]
     : [];
 
