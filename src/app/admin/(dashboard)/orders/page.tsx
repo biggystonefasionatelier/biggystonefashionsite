@@ -33,6 +33,10 @@ type Order = {
   delivery_note?: string | null;
 };
 
+function totalPieces(o: Order): number {
+  return o.order_items.reduce((sum, item) => sum + item.quantity, 0);
+}
+
 function deliveryLabel(o: Order): string | null {
   if (!o.delivery_method) return null;
   if (o.delivery_method === "pickup") return "Pickup";
@@ -94,6 +98,9 @@ export default function AdminOrdersPage() {
                 </div>
                 <div className="text-right">
                   <p className="font-bold">₦{Number(o.total).toLocaleString()}</p>
+                  <p className="text-xs font-medium text-neutral-700">
+                    {totalPieces(o)} piece{totalPieces(o) === 1 ? "" : "s"}
+                  </p>
                   <select
                     value={o.status}
                     onChange={(e) => updateStatus(o.id, e.target.value)}
