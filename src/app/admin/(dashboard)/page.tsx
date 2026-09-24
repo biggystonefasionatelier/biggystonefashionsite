@@ -10,6 +10,7 @@ type Stats = {
   totalProducts: number;
   inventoryValue: number;
   amountSold: number;
+  piecesSold: number;
 };
 
 // Orders in these statuses count as sold - paid but not yet marked fulfilled
@@ -28,7 +29,11 @@ export default function AdminOverviewPage() {
         fetch("/api/admin/products").then((r) => r.json()),
       ]);
 
-      const orders: { status: string; total: number }[] = ordersRes.orders ?? [];
+      const orders: {
+        status: string;
+        total: number;
+        order_items: { quantity: number }[];
+      }[] = ordersRes.orders ?? [];
       const products: { price: number; stock: number; active: boolean }[] =
         productsRes.products ?? [];
 
@@ -42,6 +47,12 @@ export default function AdminOverviewPage() {
         amountSold: orders
           .filter((o) => SOLD_STATUSES.has(o.status))
           .reduce((sum, o) => sum + Number(o.total), 0),
+        piecesSold: orders
+          .filter((o) => SOLD_STATUSES.has(o.status))
+          .reduce(
+            (sum, o) => sum + o.order_items.reduce((itemSum, i) => itemSum + i.quantity, 0),
+            0
+          ),
       });
     }
     load();
@@ -51,6 +62,7 @@ export default function AdminOverviewPage() {
     ? [
         { label: "Total product amount (stock value)", value: `₦${stats.inventoryValue.toLocaleString()}` },
         { label: "Amount sold", value: `₦${stats.amountSold.toLocaleString()}` },
+        { label: "Pieces sold", value: stats.piecesSold },
         { label: "Total orders", value: stats.totalOrders },
         { label: "Paid orders", value: stats.paidOrders },
         { label: "Email/birthday signups", value: stats.totalSignups },
