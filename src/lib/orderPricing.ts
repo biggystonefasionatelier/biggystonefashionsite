@@ -78,6 +78,27 @@ export async function resolveCart(
     };
   }
 
+  // MOQ applies per product, not per cart line - a wholesale piece ordered
+  // in two colors should have those quantities added together before
+  // checking against its minimum, not judged one line at a time.
+  const quantityByProduct = new Map<string, number>();
+  for (const item of items) {
+    quantityByProduct.set(item.productId, (quantityByProduct.get(item.productId) ?? 0) + item.quantity);
+  }
+  if (orderType === "wholesale") {
+    for (const product of products) {
+      const moq = product.moq;
+      if (!moq) continue;
+      const orderedQuantity = quantityByProduct.get(product.id) ?? 0;
+      if (orderedQuantity < moq) {
+        return {
+          ok: false,
+          error: `${product.name} has a minimum order of ${moq} units (you have ${orderedQuantity} in your cart).`,
+        };
+      }
+    }
+  }
+
   let total = 0;
   let stockError: string | null = null;
   const orderItems = items.map((item) => {

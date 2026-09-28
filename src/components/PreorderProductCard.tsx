@@ -7,7 +7,8 @@ import type { Product } from "@/lib/products";
 export default function PreorderProductCard({ product }: { product: Product }) {
   const { addItem } = useCart();
   const [added, setAdded] = useState(false);
-  const [quantity, setQuantity] = useState(1);
+  const minQuantity = product.moq && product.moq > 0 ? product.moq : 1;
+  const [quantity, setQuantity] = useState(minQuantity);
   const hasColors = !!product.colors && product.colors.length > 0;
   const [color, setColor] = useState(hasColors ? "" : undefined);
 
@@ -17,10 +18,11 @@ export default function PreorderProductCard({ product }: { product: Product }) {
       productId: product.id,
       name: product.name,
       price: product.price,
-      quantity: Math.max(1, quantity),
+      quantity: Math.max(minQuantity, quantity),
       imageUrl: product.image_url ?? undefined,
       orderType: "wholesale",
       color: color || undefined,
+      moq: product.moq ?? undefined,
     });
     setAdded(true);
     setTimeout(() => setAdded(false), 1500);
@@ -64,9 +66,9 @@ export default function PreorderProductCard({ product }: { product: Product }) {
       <div className="mt-2 flex items-center gap-2">
         <input
           type="number"
-          min={1}
+          min={minQuantity}
           value={quantity}
-          onChange={(e) => setQuantity(Math.max(1, Number(e.target.value) || 1))}
+          onChange={(e) => setQuantity(Math.max(minQuantity, Number(e.target.value) || minQuantity))}
           className="w-16 rounded-md border border-black/15 px-2 py-1.5 text-sm"
         />
         <button

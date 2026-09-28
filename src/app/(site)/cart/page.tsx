@@ -37,10 +37,15 @@ export default function CartPage() {
               {item.orderType === "wholesale" && (
                 <p className="text-xs text-brand-gold">Pre-order wholesale</p>
               )}
+              {item.moq && item.quantity < item.moq && (
+                <p className="text-xs text-red-600">
+                  Minimum order for this piece is {item.moq} units
+                </p>
+              )}
             </div>
             <input
               type="number"
-              min={1}
+              min={item.moq && item.moq > 0 ? item.moq : 1}
               value={item.quantity}
               onChange={(e) => updateQuantity(item.productId, Number(e.target.value), item.color)}
               className="w-16 rounded-md border border-black/15 px-2 py-1 text-sm"

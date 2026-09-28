@@ -267,6 +267,17 @@ export default function CheckoutPage() {
         </p>
       )}
 
+      {orderType === "wholesale" && (
+        <div className="mt-4 rounded-xl border border-brand-gold/40 bg-brand-gold-light/20 p-4 text-sm">
+          <p className="font-medium">How pre-order payment works</p>
+          <p className="mt-1 text-neutral-700">
+            After you submit this form, you&apos;ll be shown our Opay account
+            details. Send the full amount there, then send your payment
+            receipt to us on WhatsApp so we can confirm your order.
+          </p>
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="mt-6 grid gap-3">
         <input
           name="customerName"
@@ -306,13 +317,6 @@ export default function CheckoutPage() {
           placeholder="City"
           className="rounded-md border border-black/15 px-3 py-2 text-sm"
         />
-
-        {orderType === "wholesale" && (
-          <p className="text-xs text-neutral-500">
-            Next step: pay the full amount to our Opay account and send your
-            receipt on WhatsApp.
-          </p>
-        )}
 
         {orderType === "retail" && (
           <>
