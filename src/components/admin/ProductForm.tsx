@@ -4,6 +4,13 @@ import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import type { Product } from "@/lib/products";
 
+// Vercel rejects any upload over ~4.5MB at the platform level, before this
+// app's own code (and its friendly error message) ever runs - so that has
+// to be caught here in the browser, before the file is even sent, or the
+// admin just sees a raw "Request Entity Too Large" page instead of a
+// helpful message.
+const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
+
 export default function ProductForm({ product }: { product?: Product }) {
   const router = useRouter();
   const [error, setError] = useState("");
@@ -17,6 +24,14 @@ export default function ProductForm({ product }: { product?: Product }) {
   async function handleFileChange(e: FormEvent<HTMLInputElement>) {
     const file = e.currentTarget.files?.[0];
     if (!file) return;
+
+    if (file.size > MAX_UPLOAD_BYTES) {
+      setError(
+        `That photo is ${(file.size / 1024 / 1024).toFixed(1)}MB - please use one under 4MB (most phone photos work fine once you use the "compress" or "smaller size" option when sharing/sending it).`
+      );
+      e.currentTarget.value = "";
+      return;
+    }
 
     setUploading(true);
     setError("");

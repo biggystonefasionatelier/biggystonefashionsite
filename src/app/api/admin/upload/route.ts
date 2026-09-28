@@ -2,7 +2,12 @@ import { NextResponse } from "next/server";
 import { put } from "@vercel/blob";
 import sharp from "sharp";
 
-const MAX_BYTES = 5 * 1024 * 1024;
+// Vercel's own platform limit for a Serverless Function's request body
+// sits below 5MB, so a file that actually reaches this check has already
+// gotten past that - this exists as a backstop for anything that calls
+// this route directly (bypassing ProductForm's client-side check), not as
+// the primary defense. Keep in sync with MAX_UPLOAD_BYTES in ProductForm.
+const MAX_BYTES = 4 * 1024 * 1024;
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/avif"]);
 
 // Product photos only ever need to fill a grid thumbnail or a modest
@@ -35,7 +40,7 @@ export async function POST(request: Request) {
     );
   }
   if (file.size > MAX_BYTES) {
-    return NextResponse.json({ error: "Image must be under 5MB" }, { status: 400 });
+    return NextResponse.json({ error: "Image must be under 4MB" }, { status: 400 });
   }
 
   try {
