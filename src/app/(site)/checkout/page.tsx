@@ -25,11 +25,16 @@ type DiscountPreviewState = {
   amount: number;
 };
 
+const WHATSAPP_NUMBER = "2348148263705";
+const OPAY_ACCOUNT_NAME = "Biggystone Fashion Atelier";
+const OPAY_ACCOUNT_NUMBER = "7037441233";
+
+type PreorderResult = { total: number; reference: string; customerName: string };
+
 export default function CheckoutPage() {
-  const { items, subtotal } = useCart();
+  const { items, subtotal, clear } = useCart();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const [depositOnly, setDepositOnly] = useState(false);
   const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>("pickup");
   const [deliveryZone, setDeliveryZone] = useState(DELIVERY_ZONES[0].id);
   const [email, setEmail] = useState("");
@@ -39,7 +44,59 @@ export default function CheckoutPage() {
     message: "",
     amount: 0,
   });
+  const [preorderResult, setPreorderResult] = useState<PreorderResult | null>(null);
   const selectedZone = DELIVERY_ZONES.find((z) => z.id === deliveryZone);
+
+  if (preorderResult) {
+    const whatsappMessage = [
+      `Hi Biggystone! I just paid for my pre-order.`,
+      `Name: ${preorderResult.customerName}`,
+      `Total paid: ₦${preorderResult.total.toLocaleString()}`,
+      `Reference: ${preorderResult.reference}`,
+      `(Attaching my payment receipt)`,
+    ].join("\n");
+    const whatsappHref = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(whatsappMessage)}`;
+
+    return (
+      <div className="mx-auto max-w-xl px-4 py-16">
+        <h1 className="text-2xl font-bold">Pay via Opay to finish your pre-order</h1>
+        <p className="mt-2 text-sm text-neutral-600">
+          Your order has been saved. Transfer the amount below to our Opay
+          account, then send your payment receipt on WhatsApp so we can
+          confirm it.
+        </p>
+
+        <div className="mt-6 rounded-xl border border-black/10 bg-neutral-50 p-5">
+          <p className="text-xs text-neutral-500">Amount to pay</p>
+          <p className="text-2xl font-bold">₦{preorderResult.total.toLocaleString()}</p>
+          <div className="mt-4 space-y-1 text-sm">
+            <p>
+              <span className="text-neutral-500">Bank:</span> Opay
+            </p>
+            <p>
+              <span className="text-neutral-500">Account name:</span> {OPAY_ACCOUNT_NAME}
+            </p>
+            <p>
+              <span className="text-neutral-500">Account number:</span>{" "}
+              <span className="font-mono font-medium">{OPAY_ACCOUNT_NUMBER}</span>
+            </p>
+          </div>
+        </div>
+
+        <a
+          href={whatsappHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-6 block w-full rounded-full bg-brand-black py-3 text-center text-sm text-brand-gold-light"
+        >
+          I&apos;ve paid — send receipt on WhatsApp
+        </a>
+        <p className="mt-3 text-center text-xs text-neutral-500">
+          Your reference: <span className="font-mono">{preorderResult.reference}</span>
+        </p>
+      </div>
+    );
+  }
 
   if (items.length === 0) {
     return (
@@ -83,7 +140,6 @@ export default function CheckoutPage() {
           email,
           orderType,
           discountCode: code,
-          depositOnly,
           items: items.map((i) => ({ productId: i.productId, quantity: i.quantity, color: i.color })),
         }),
       });
@@ -114,22 +170,50 @@ export default function CheckoutPage() {
     setSubmitting(true);
 
     const form = new FormData(e.currentTarget);
+    const customerName = String(form.get("customerName") ?? "");
 
     try {
+      if (orderType === "wholesale") {
+        const res = await fetch("/api/checkout/preorder-initialize", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            customerName,
+            email,
+            phone: String(form.get("phone") ?? ""),
+            address: String(form.get("address") ?? ""),
+            city: String(form.get("city") ?? ""),
+            orderType,
+            items: items.map((i) => ({ productId: i.productId, quantity: i.quantity, color: i.color })),
+          }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          setError(data.error ?? "Checkout failed. Please try again.");
+          setSubmitting(false);
+          return;
+        }
+
+        clear();
+        setPreorderResult({ total: data.total, reference: data.reference, customerName });
+        return;
+      }
+
       const res = await fetch("/api/checkout/initialize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          customerName: String(form.get("customerName") ?? ""),
+          customerName,
           email,
           phone: String(form.get("phone") ?? ""),
           address: String(form.get("address") ?? ""),
           city: String(form.get("city") ?? ""),
           orderType,
-          depositOnly,
           discountCode,
-          deliveryMethod: orderType === "retail" ? deliveryMethod : undefined,
-          deliveryZone: orderType === "retail" && deliveryMethod === "delivery" ? deliveryZone : undefined,
+          deliveryMethod,
+          deliveryZone: deliveryMethod === "delivery" ? deliveryZone : undefined,
           deliveryNote: String(form.get("deliveryNote") ?? ""),
           items: items.map((i) => ({ productId: i.productId, quantity: i.quantity, color: i.color })),
         }),
@@ -224,14 +308,10 @@ export default function CheckoutPage() {
         />
 
         {orderType === "wholesale" && (
-          <label className="flex items-center gap-2 text-sm text-neutral-600">
-            <input
-              type="checkbox"
-              checked={depositOnly}
-              onChange={(e) => setDepositOnly(e.target.checked)}
-            />
-            Pay deposit now, balance before delivery
-          </label>
+          <p className="text-xs text-neutral-500">
+            Next step: pay the full amount to our Opay account and send your
+            receipt on WhatsApp.
+          </p>
         )}
 
         {orderType === "retail" && (
@@ -354,7 +434,13 @@ export default function CheckoutPage() {
           disabled={submitting}
           className="mt-2 rounded-full bg-brand-black py-3 text-sm text-brand-gold-light disabled:opacity-60"
         >
-          {submitting ? "Redirecting to payment..." : "Pay with Paystack"}
+          {orderType === "wholesale"
+            ? submitting
+              ? "Saving your order..."
+              : "Continue to Opay payment"
+            : submitting
+              ? "Redirecting to payment..."
+              : "Pay with Paystack"}
         </button>
 
         {error && <p className="text-xs text-red-600">{error}</p>}

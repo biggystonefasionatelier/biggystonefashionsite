@@ -18,6 +18,7 @@ type Order = {
   city: string;
   order_type: "retail" | "wholesale";
   status: string;
+  payment_method?: "paystack" | "opay" | null;
   total: number;
   deposit_only: boolean;
   created_at: string;
@@ -88,7 +89,18 @@ export default function AdminOrdersPage() {
                   <p className="font-medium">
                     {o.customer_name} · <span className="capitalize">{o.order_type}</span>
                     {o.deposit_only && " (deposit)"}
+                    {o.payment_method === "opay" && (
+                      <span className="ml-2 rounded-full bg-brand-gold-light px-2 py-0.5 text-xs font-medium text-neutral-800">
+                        Opay
+                      </span>
+                    )}
                   </p>
+                  {o.payment_method === "opay" && o.status === "pending" && (
+                    <p className="mt-1 text-xs text-neutral-500">
+                      Awaiting Opay confirmation — check your Opay app/WhatsApp,
+                      then mark this paid.
+                    </p>
+                  )}
                   <p className="text-xs text-neutral-500">
                     {o.email} · {o.phone}
                   </p>

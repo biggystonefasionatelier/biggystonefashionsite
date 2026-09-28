@@ -12,6 +12,7 @@ type OrderDoc = {
   phone: string;
   total: number;
   order_type: "retail" | "wholesale";
+  payment_method?: "paystack" | "opay" | null;
   order_items: OrderItemDoc[];
   created_at: Date;
 };
@@ -23,6 +24,11 @@ type OrderDoc = {
  * WhatsApp. Each order is only ever notified once, tracked via
  * abandoned_notified, so this can safely run daily without re-alerting
  * on the same stale order every time.
+ *
+ * Opay pre-orders are excluded - those are *always* "pending" until Faith
+ * manually confirms the transfer and marks them paid, so every one of
+ * them would otherwise get flagged as "abandoned" the day after it's
+ * placed, which isn't true and isn't useful.
  */
 export async function GET(request: Request) {
   const authHeader = request.headers.get("authorization");
@@ -35,7 +41,12 @@ export async function GET(request: Request) {
 
   const abandoned = await db
     .collection<OrderDoc>("orders")
-    .find({ status: "pending", created_at: { $lt: cutoff }, abandoned_notified: { $ne: true } })
+    .find({
+      status: "pending",
+      payment_method: { $ne: "opay" },
+      created_at: { $lt: cutoff },
+      abandoned_notified: { $ne: true },
+    })
     .toArray();
 
   for (const order of abandoned) {
