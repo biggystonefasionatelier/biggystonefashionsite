@@ -4,11 +4,16 @@ import { useState } from "react";
 import { useCart } from "@/components/CartContext";
 import type { Product } from "@/lib/products";
 
-export default function PreorderProductCard({ product }: { product: Product }) {
+export default function PreorderProductCard({
+  product,
+  categoryMoq,
+}: {
+  product: Product;
+  categoryMoq?: number;
+}) {
   const { addItem } = useCart();
   const [added, setAdded] = useState(false);
-  const minQuantity = product.moq && product.moq > 0 ? product.moq : 1;
-  const [quantity, setQuantity] = useState(minQuantity);
+  const [quantity, setQuantity] = useState(1);
   const hasColors = !!product.colors && product.colors.length > 0;
   const [color, setColor] = useState(hasColors ? "" : undefined);
 
@@ -18,11 +23,11 @@ export default function PreorderProductCard({ product }: { product: Product }) {
       productId: product.id,
       name: product.name,
       price: product.price,
-      quantity: Math.max(minQuantity, quantity),
+      quantity: Math.max(1, quantity),
       imageUrl: product.image_url ?? undefined,
       orderType: "wholesale",
       color: color || undefined,
-      moq: product.moq ?? undefined,
+      category: product.category ?? undefined,
     });
     setAdded(true);
     setTimeout(() => setAdded(false), 1500);
@@ -46,7 +51,11 @@ export default function PreorderProductCard({ product }: { product: Product }) {
       </div>
       <p className="mt-3 font-medium">{product.name}</p>
       <p className="text-sm text-neutral-500">₦{product.price.toLocaleString()} / unit</p>
-      {product.moq && <p className="text-xs text-neutral-500">MOQ: {product.moq} units</p>}
+      {!!categoryMoq && (
+        <p className="text-xs text-neutral-500">
+          {product.category} minimum: {categoryMoq} pieces total (mix any designs)
+        </p>
+      )}
 
       {hasColors && (
         <select
@@ -66,9 +75,9 @@ export default function PreorderProductCard({ product }: { product: Product }) {
       <div className="mt-2 flex items-center gap-2">
         <input
           type="number"
-          min={minQuantity}
+          min={1}
           value={quantity}
-          onChange={(e) => setQuantity(Math.max(minQuantity, Number(e.target.value) || minQuantity))}
+          onChange={(e) => setQuantity(Math.max(1, Number(e.target.value) || 1))}
           className="w-16 rounded-md border border-black/15 px-2 py-1.5 text-sm"
         />
         <button

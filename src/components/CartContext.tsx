@@ -16,7 +16,7 @@ export type CartItem = {
   imageUrl?: string;
   orderType: "retail" | "wholesale";
   color?: string;
-  moq?: number;
+  category?: string;
 };
 
 type CartContextValue = {

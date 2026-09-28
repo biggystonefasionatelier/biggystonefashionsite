@@ -1,6 +1,7 @@
 import type { Db } from "mongodb";
 import { ObjectId } from "mongodb";
 import { toProduct, type ProductDoc } from "@/lib/products";
+import { getCategoryMoqMap } from "@/lib/categoryMoq";
 import {
   BIRTHDAY_DISCOUNT_PERCENT,
   checkBirthdayDiscountEligibility,
@@ -78,22 +79,26 @@ export async function resolveCart(
     };
   }
 
-  // MOQ applies per product, not per cart line - a wholesale piece ordered
-  // in two colors should have those quantities added together before
-  // checking against its minimum, not judged one line at a time.
-  const quantityByProduct = new Map<string, number>();
-  for (const item of items) {
-    quantityByProduct.set(item.productId, (quantityByProduct.get(item.productId) ?? 0) + item.quantity);
-  }
+  // MOQ is per category, not per design - a customer ordering 10 brooches
+  // can mix any 10 brooch designs together, they aren't required to order
+  // 10 of one exact piece. Category minimums are configured by Faith at
+  // /admin/preorder-moq (see src/lib/categoryMoq.ts) rather than being a
+  // property of any one product.
   if (orderType === "wholesale") {
-    for (const product of products) {
-      const moq = product.moq;
+    const categoryMoqMap = await getCategoryMoqMap(db);
+    const quantityByCategory = new Map<string, number>();
+    for (const item of items) {
+      const product = products.find((p) => p.id === item.productId)!;
+      const category = product.category || "Uncategorized";
+      quantityByCategory.set(category, (quantityByCategory.get(category) ?? 0) + item.quantity);
+    }
+    for (const [category, orderedQuantity] of quantityByCategory) {
+      const moq = categoryMoqMap.get(category);
       if (!moq) continue;
-      const orderedQuantity = quantityByProduct.get(product.id) ?? 0;
       if (orderedQuantity < moq) {
         return {
           ok: false,
-          error: `${product.name} has a minimum order of ${moq} units (you have ${orderedQuantity} in your cart).`,
+          error: `${category} has a minimum order of ${moq} pieces (mix any designs) - you have ${orderedQuantity} in your cart.`,
         };
       }
     }

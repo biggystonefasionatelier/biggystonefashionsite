@@ -8,6 +8,7 @@ const LINKS = [
   { href: "/admin/products", label: "Products" },
   { href: "/admin/orders", label: "Orders" },
   { href: "/admin/wholesale", label: "Wholesale inquiries" },
+  { href: "/admin/preorder-moq", label: "Pre-order MOQ" },
   { href: "/admin/signups", label: "Email/birthday list" },
   { href: "/admin/gifts", label: "Loyalty gifts" },
 ];

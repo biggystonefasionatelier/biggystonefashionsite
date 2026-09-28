@@ -1,13 +1,26 @@
 import Link from "next/link";
 import { getProducts } from "@/lib/products";
+import { getDb } from "@/lib/mongodb";
+import { getCategoryMoqMap } from "@/lib/categoryMoq";
 import WholesaleInquiryForm from "@/components/WholesaleInquiryForm";
 import PreorderProductCard from "@/components/PreorderProductCard";
 
 export const metadata = { title: "Wholesale | Biggystone Fashion Atelier" };
 export const revalidate = 60;
 
+async function safeGetCategoryMoqMap(): Promise<Map<string, number>> {
+  try {
+    const db = await getDb();
+    return await getCategoryMoqMap(db);
+  } catch (err) {
+    console.error("getCategoryMoqMap failed (is MongoDB configured yet?):", err);
+    return new Map();
+  }
+}
+
 export default async function WholesalePage() {
   const products = await getProducts("wholesale");
+  const categoryMoqMap = await safeGetCategoryMoqMap();
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-12">
@@ -46,7 +59,11 @@ export default async function WholesalePage() {
           </p>
           <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
             {products.map((p) => (
-              <PreorderProductCard key={p.id} product={p} />
+              <PreorderProductCard
+                key={p.id}
+                product={p}
+                categoryMoq={p.category ? categoryMoqMap.get(p.category) : undefined}
+              />
             ))}
           </div>
           <Link
