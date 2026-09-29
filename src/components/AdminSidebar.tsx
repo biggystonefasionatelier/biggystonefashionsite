@@ -8,7 +8,7 @@ const LINKS = [
   { href: "/admin/products", label: "Products" },
   { href: "/admin/orders", label: "Orders" },
   { href: "/admin/wholesale", label: "Wholesale inquiries" },
-  { href: "/admin/preorder-moq", label: "Pre-order MOQ" },
+  { href: "/admin/preorder", label: "Pre-order" },
   { href: "/admin/signups", label: "Email/birthday list" },
   { href: "/admin/gifts", label: "Loyalty gifts" },
 ];
@@ -31,7 +31,10 @@ export default function AdminSidebar() {
       </div>
       <nav className="flex flex-col gap-1 px-3">
         {LINKS.map((link) => {
-          const active = pathname === link.href;
+          const active =
+            link.href === "/admin"
+              ? pathname === link.href
+              : pathname === link.href || pathname.startsWith(`${link.href}/`);
           return (
             <Link
               key={link.href}

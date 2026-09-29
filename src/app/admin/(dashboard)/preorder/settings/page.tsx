@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 type CategoryMoq = { category: string; moq: number | null };
 
-export default function PreorderMoqPage() {
+export default function PreorderSettingsPage() {
   const [categories, setCategories] = useState<CategoryMoq[] | null>(null);
   const [saving, setSaving] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<Record<string, number>>({});
@@ -32,7 +32,7 @@ export default function PreorderMoqPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold">Pre-order minimum order (MOQ)</h1>
+      <h2 className="font-bold">Minimum order (MOQ) per category</h2>
       <p className="mt-2 max-w-2xl text-sm text-neutral-600">
         This is the minimum total pieces a customer must pre-order per
         category, mixing any designs they like within it - not a minimum

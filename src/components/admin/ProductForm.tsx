@@ -11,14 +11,20 @@ import type { Product } from "@/lib/products";
 // helpful message.
 const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
 
-export default function ProductForm({ product }: { product?: Product }) {
+export default function ProductForm({
+  product,
+  defaultProductType,
+}: {
+  product?: Product;
+  defaultProductType?: "retail" | "wholesale";
+}) {
   const router = useRouter();
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [imageUrl, setImageUrl] = useState(product?.image_url ?? "");
   const [productType, setProductType] = useState<"retail" | "wholesale">(
-    product?.product_type ?? "retail"
+    product?.product_type ?? defaultProductType ?? "retail"
   );
 
   async function handleFileChange(e: FormEvent<HTMLInputElement>) {

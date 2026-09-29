@@ -3,13 +3,13 @@
 import { useEffect, useState } from "react";
 import OrderCard, { type Order } from "@/components/admin/OrderCard";
 
-export default function AdminOrdersPage() {
+export default function PreorderOrdersPage() {
   const [orders, setOrders] = useState<Order[] | null>(null);
 
   function load() {
     fetch("/api/admin/orders")
       .then((r) => r.json())
-      .then((data) => setOrders(data.orders ?? []));
+      .then((data) => setOrders((data.orders ?? []).filter((o: Order) => o.order_type === "wholesale")));
   }
 
   useEffect(() => {
@@ -29,14 +29,12 @@ export default function AdminOrdersPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold">Orders</h1>
-
       {!orders ? (
-        <p className="mt-6 text-sm text-neutral-500">Loading...</p>
+        <p className="text-sm text-neutral-500">Loading...</p>
       ) : orders.length === 0 ? (
-        <p className="mt-6 text-sm text-neutral-500">No orders yet.</p>
+        <p className="text-sm text-neutral-500">No pre-orders yet.</p>
       ) : (
-        <div className="mt-6 space-y-4">
+        <div className="space-y-4">
           {orders.map((o) => (
             <OrderCard key={o.id} order={o} onStatusChange={updateStatus} />
           ))}
