@@ -3,15 +3,21 @@ import { ObjectId } from "mongodb";
 import { z } from "zod";
 import { getDb } from "@/lib/mongodb";
 
-const updateSchema = z.object({
-  status: z.enum(["pending", "paid", "failed", "fulfilled", "cancelled"]),
-});
+const updateSchema = z
+  .object({
+    status: z.enum(["pending", "paid", "failed", "fulfilled", "cancelled"]).optional(),
+    sent_to_supplier: z.boolean().optional(),
+  })
+  .refine((data) => data.status !== undefined || data.sent_to_supplier !== undefined, {
+    message: "Nothing to update",
+  });
 
 type OrderItemDoc = { product_id: string; quantity: number };
 type OrderDoc = {
   status: string;
   order_type: "retail" | "wholesale";
   order_items: OrderItemDoc[];
+  sent_to_supplier?: boolean;
 };
 
 export async function PATCH(
@@ -52,9 +58,13 @@ export async function PATCH(
     }
     const isNewlyPaid = parsed.data.status === "paid" && before.status !== "paid";
 
+    const set: { status?: string; sent_to_supplier?: boolean } = {};
+    if (parsed.data.status !== undefined) set.status = parsed.data.status;
+    if (parsed.data.sent_to_supplier !== undefined) set.sent_to_supplier = parsed.data.sent_to_supplier;
+
     const result = await orders.findOneAndUpdate(
       { _id: new ObjectId(id) },
-      { $set: { status: parsed.data.status } },
+      { $set: set },
       { returnDocument: "after" }
     );
 

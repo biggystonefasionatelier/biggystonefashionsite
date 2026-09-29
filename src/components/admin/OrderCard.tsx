@@ -17,6 +17,7 @@ export type Order = {
   city: string;
   order_type: "retail" | "wholesale";
   status: string;
+  sent_to_supplier?: boolean;
   payment_method?: "paystack" | "opay" | null;
   total: number;
   deposit_only: boolean;
