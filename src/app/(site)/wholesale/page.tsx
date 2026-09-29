@@ -3,7 +3,7 @@ import { getProducts } from "@/lib/products";
 import { getDb } from "@/lib/mongodb";
 import { getCategoryMoqMap } from "@/lib/categoryMoq";
 import WholesaleInquiryForm from "@/components/WholesaleInquiryForm";
-import PreorderProductCard from "@/components/PreorderProductCard";
+import PreorderBrowser from "@/components/PreorderBrowser";
 
 export const metadata = { title: "Wholesale | Biggystone Fashion Atelier" };
 export const revalidate = 60;
@@ -77,14 +77,8 @@ export default async function WholesalePage() {
               below - that&apos;s paid separately when your order arrives.
             </p>
           </div>
-          <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-            {products.map((p) => (
-              <PreorderProductCard
-                key={p.id}
-                product={p}
-                categoryMoq={p.category ? categoryMoqMap.get(p.category) : undefined}
-              />
-            ))}
+          <div className="mt-6">
+            <PreorderBrowser products={products} categoryMoq={Object.fromEntries(categoryMoqMap)} />
           </div>
           <Link
             href="/cart"
