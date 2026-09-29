@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 type Stats = {
   totalOrders: number;
@@ -30,13 +31,18 @@ export default function AdminOverviewPage() {
         fetch("/api/admin/products").then((r) => r.json()),
       ]);
 
+      // Retail-only - pre-order has its own Overview at /admin/preorder,
+      // so mixing the two channels here would double-count stock value,
+      // orders, and pieces sold across two different sales models.
       const orders: {
         status: string;
         total: number;
+        order_type: string;
         order_items: { quantity: number }[];
-      }[] = ordersRes.orders ?? [];
-      const products: { price: number; stock: number; active: boolean }[] =
-        productsRes.products ?? [];
+      }[] = (ordersRes.orders ?? []).filter((o: { order_type: string }) => o.order_type === "retail");
+      const products: { price: number; stock: number; active: boolean; product_type: string }[] = (
+        productsRes.products ?? []
+      ).filter((p: { product_type: string }) => p.product_type === "retail");
 
       setStats({
         totalOrders: orders.length,
@@ -69,14 +75,21 @@ export default function AdminOverviewPage() {
         { label: "Paid orders", value: stats.paidOrders },
         { label: "Email/birthday signups", value: stats.totalSignups },
         { label: "Wholesale inquiries", value: stats.totalInquiries },
-        { label: "Products listed", value: stats.totalProducts },
+        { label: "Retail products listed", value: stats.totalProducts },
         { label: "Sold out", value: stats.soldOutProducts },
       ]
     : [];
 
   return (
     <div>
-      <h1 className="text-2xl font-bold">Overview</h1>
+      <h1 className="text-2xl font-bold">Retail Overview</h1>
+      <p className="mt-1 text-sm text-neutral-500">
+        Retail only - see{" "}
+        <Link href="/admin/preorder" className="underline">
+          Pre-order
+        </Link>{" "}
+        for pre-order stats.
+      </p>
       {!stats ? (
         <p className="mt-4 text-sm text-neutral-500">Loading...</p>
       ) : (
