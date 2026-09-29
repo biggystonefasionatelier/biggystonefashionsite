@@ -17,7 +17,7 @@ export const PRE_ORDER_CATEGORIES = [
   "Button Covers",
 ] as const;
 
-export type CategoryMoqDoc = { category: string; moq: number };
+export type CategoryMoqDoc = { category: string; moq: number; price?: number };
 
 /**
  * Pre-order minimums are per *category*, not per individual design - a

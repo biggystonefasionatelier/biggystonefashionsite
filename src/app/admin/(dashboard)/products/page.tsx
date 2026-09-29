@@ -11,7 +11,9 @@ export default function AdminProductsPage() {
   useEffect(() => {
     fetch("/api/admin/products")
       .then((r) => r.json())
-      .then((data) => setProducts(data.products ?? []));
+      .then((data) =>
+        setProducts((data.products ?? []).filter((p: Product) => p.product_type === "retail"))
+      );
   }, []);
 
   const query = search.trim().toLowerCase();
@@ -28,7 +30,16 @@ export default function AdminProductsPage() {
   return (
     <div>
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Products</h1>
+        <div>
+          <h1 className="text-2xl font-bold">Products</h1>
+          <p className="mt-1 text-sm text-neutral-500">
+            Retail listings only - pre-order pieces are managed from{" "}
+            <Link href="/admin/preorder/products" className="underline">
+              Pre-order
+            </Link>
+            .
+          </p>
+        </div>
         <Link
           href="/admin/products/new"
           className="rounded-full bg-brand-black px-4 py-2 text-sm text-brand-gold-light"
@@ -69,7 +80,7 @@ export default function AdminProductsPage() {
             <thead className="border-b border-black/10 text-xs uppercase text-neutral-500">
               <tr>
                 <th className="px-4 py-3">Name</th>
-                <th className="px-4 py-3">Type</th>
+                <th className="px-4 py-3">Category</th>
                 <th className="px-4 py-3">Price</th>
                 <th className="px-4 py-3">Stock</th>
                 <th className="px-4 py-3">Active</th>
@@ -80,7 +91,7 @@ export default function AdminProductsPage() {
               {(filtered ?? []).map((p) => (
                 <tr key={p.id} className="border-b border-black/5 last:border-0">
                   <td className="px-4 py-3">{p.name}</td>
-                  <td className="px-4 py-3 capitalize">{p.product_type}</td>
+                  <td className="px-4 py-3">{p.category || "—"}</td>
                   <td className="px-4 py-3">₦{p.price.toLocaleString()}</td>
                   <td className="px-4 py-3">{p.stock}</td>
                   <td className="px-4 py-3">{p.active ? "Yes" : "No"}</td>

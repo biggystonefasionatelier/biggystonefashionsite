@@ -9,13 +9,14 @@ export async function GET() {
   try {
     const db = await getDb();
     const docs = await db.collection<CategoryMoqDoc>("category_moq").find({}).toArray();
-    const byCategory = new Map(docs.map((d) => [d.category, d.moq]));
+    const byCategory = new Map(docs.map((d) => [d.category, d]));
 
-    // Always return every known category, even ones with no MOQ set yet
-    // (moq: null), so the admin page can render a full, stable list.
+    // Always return every known category, even ones with no MOQ/price set
+    // yet, so the admin page can render a full, stable list.
     const categories = PRE_ORDER_CATEGORIES.map((category) => ({
       category,
-      moq: byCategory.get(category) ?? null,
+      moq: byCategory.get(category)?.moq ?? null,
+      price: byCategory.get(category)?.price ?? null,
     }));
 
     return NextResponse.json({ categories });
@@ -28,6 +29,8 @@ export async function GET() {
 const updateSchema = z.object({
   category: z.string().trim().min(1).max(100),
   moq: z.number().int().min(0),
+  price: z.number().min(0).optional(),
+  applyPriceToExisting: z.boolean().optional(),
 });
 
 export async function POST(request: Request) {
@@ -48,19 +51,28 @@ export async function POST(request: Request) {
 
   try {
     const db = await getDb();
-    // moq: 0 means "no minimum" - stored the same as not having a row at
-    // all, so the checkout check (which skips categories with no entry)
-    // treats them identically.
-    if (parsed.data.moq === 0) {
-      await db.collection("category_moq").deleteOne({ category: parsed.data.category });
+    const { category, moq, price } = parsed.data;
+
+    // moq: 0 means "no minimum" - but we may still need to keep/update the
+    // row if a price is set, so only delete the doc when there's neither a
+    // moq nor a price to remember for this category.
+    if (moq === 0 && price === undefined) {
+      await db.collection("category_moq").deleteOne({ category });
     } else {
-      await db.collection("category_moq").updateOne(
-        { category: parsed.data.category },
-        { $set: { moq: parsed.data.moq } },
-        { upsert: true }
-      );
+      const set: { moq: number; price?: number } = { moq };
+      if (price !== undefined) set.price = price;
+      await db.collection("category_moq").updateOne({ category }, { $set: set }, { upsert: true });
     }
-    return NextResponse.json({ ok: true });
+
+    let updatedCount: number | null = null;
+    if (parsed.data.applyPriceToExisting && price !== undefined) {
+      const result = await db
+        .collection("products")
+        .updateMany({ product_type: "wholesale", category }, { $set: { price } });
+      updatedCount = result.modifiedCount;
+    }
+
+    return NextResponse.json({ ok: true, updatedCount });
   } catch (err) {
     console.error("Admin category-moq POST failed:", err);
     return NextResponse.json({ error: "Failed to save MOQ" }, { status: 500 });
