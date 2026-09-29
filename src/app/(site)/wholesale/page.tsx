@@ -57,6 +57,26 @@ export default async function WholesalePage() {
             many. These are made/sourced to order, so lead time is longer
             than in-stock pieces.
           </p>
+          <div className="mt-3 max-w-2xl rounded-lg border border-black/10 bg-neutral-50 p-3 text-sm text-neutral-600">
+            <p>
+              Don&apos;t see the design you want here?{" "}
+              <a
+                href={`https://wa.me/2348148263705?text=${encodeURIComponent(
+                  "Hi Biggystone! I want to pre-order a piece that's not on your site - here's a picture of what I want:"
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium underline"
+              >
+                Send us a picture on WhatsApp
+              </a>{" "}
+              and we&apos;ll let you know if we can source it.
+            </p>
+            <p className="mt-1">
+              Shipping/delivery (waybill) fee is not included in the price
+              below - that&apos;s paid separately when your order arrives.
+            </p>
+          </div>
           <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
             {products.map((p) => (
               <PreorderProductCard
