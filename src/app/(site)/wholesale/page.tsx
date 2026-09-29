@@ -73,7 +73,7 @@ export default async function WholesalePage() {
               and we&apos;ll let you know if we can source it.
             </p>
             <p className="mt-1">
-              Shipping/delivery (waybill) fee is not included in the price
+              Shipping and delivery/waybill fee is not included in the price
               below - that&apos;s paid separately when your order arrives.
             </p>
           </div>

@@ -276,7 +276,7 @@ export default function CheckoutPage() {
             receipt to us on WhatsApp so we can confirm your order.
           </p>
           <p className="mt-1 text-neutral-700">
-            Shipping/delivery (waybill) fee isn&apos;t included above -
+            Shipping and delivery/waybill fee isn&apos;t included above -
             that&apos;s paid separately when your order arrives.
           </p>
         </div>
