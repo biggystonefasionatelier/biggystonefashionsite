@@ -15,6 +15,7 @@ import {
 } from "@/lib/referral";
 import { calculateBundleDiscount } from "@/lib/bundleDiscount";
 import { PROMO, isPromoActive } from "@/lib/promo";
+import { flashSaleUnitPrice } from "@/lib/flashSale";
 
 // Manually distributed by Faith to approved resellers. Runs through the
 // same retail catalog and checkout as everyone else - resellers pick the
@@ -113,14 +114,15 @@ export async function resolveCart(
       stockError = `Not enough stock for ${product.name}`;
     }
 
-    const lineTotal = product.price * item.quantity;
+    const unitPrice = flashSaleUnitPrice(product.price, product.product_type);
+    const lineTotal = unitPrice * item.quantity;
     total += lineTotal;
 
     return {
       product_id: product.id,
       product_name: product.name,
       quantity: item.quantity,
-      unit_price: product.price,
+      unit_price: unitPrice,
       color: item.color || null,
       image_url: product.image_url || null,
     };

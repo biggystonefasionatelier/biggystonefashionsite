@@ -12,6 +12,7 @@ export type CartItem = {
   productId: string;
   name: string;
   price: number;
+  originalPrice?: number;
   quantity: number;
   imageUrl?: string;
   orderType: "retail" | "wholesale";

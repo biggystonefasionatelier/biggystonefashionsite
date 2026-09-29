@@ -3,11 +3,13 @@ import { getProducts } from "@/lib/products";
 import ProductCard from "@/components/ProductCard";
 import SignupForm from "@/components/SignupForm";
 import { PROMO, isPromoActive, promoDaysRemaining } from "@/lib/promo";
+import { FLASH_SALE, isFlashSaleActive, flashSaleEndLabel } from "@/lib/flashSale";
 
 export const revalidate = 60;
 
 export default async function HomePage() {
   const featured = await getProducts("retail", 8);
+  const flashSaleActive = isFlashSaleActive();
   const promoActive = isPromoActive();
   const daysLeft = promoDaysRemaining();
 
@@ -19,16 +21,18 @@ export default async function HomePage() {
           Luxury-look jewelry. Real prices.
         </h1>
         <p className="mx-auto mt-4 max-w-xl text-brand-gold">
-          {promoActive
-            ? `New pieces every month, from ₦1,000 — and right now, ${PROMO.percent}% off everything.`
-            : "New pieces every month, from ₦1,000."}
+          {flashSaleActive
+            ? `New pieces every month, from ₦1,000 — and right now, ${FLASH_SALE.percent}% off pieces ₦${FLASH_SALE.minPrice.toLocaleString()} and up.`
+            : promoActive
+              ? `New pieces every month, from ₦1,000 — and right now, ${PROMO.percent}% off everything.`
+              : "New pieces every month, from ₦1,000."}
         </p>
         <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
           <Link
             href="/shop"
             className="rounded-full bg-brand-gold px-6 py-3 text-sm font-medium text-brand-black"
           >
-            {promoActive ? "Shop the September Sale" : "Shop now"}
+            {flashSaleActive ? "Shop the Flash Sale" : promoActive ? "Shop the September Sale" : "Shop now"}
           </Link>
           <Link href="/delivery" className="text-sm underline underline-offset-4">
             Unilag? Pick up same-day →
@@ -37,7 +41,14 @@ export default async function HomePage() {
       </section>
 
       {/* Discount banner */}
-      {promoActive && (
+      {flashSaleActive ? (
+        <section className="bg-brand-gold-light px-4 py-4 text-center text-sm text-neutral-800">
+          <strong>
+            Flash Sale — {FLASH_SALE.percent}% off pieces ₦{FLASH_SALE.minPrice.toLocaleString()}+.
+          </strong>{" "}
+          Prices are already discounted — no code needed. Ends {flashSaleEndLabel()}.
+        </section>
+      ) : promoActive ? (
         <section className="bg-brand-gold-light px-4 py-4 text-center text-sm text-neutral-800">
           <strong>
             September Sale — {PROMO.percent}% off with code {PROMO.code}.
@@ -45,7 +56,7 @@ export default async function HomePage() {
           Free delivery on orders ₦{PROMO.freeDeliveryThreshold.toLocaleString()}+. Ends in{" "}
           {daysLeft} {daysLeft === 1 ? "day" : "days"}.
         </section>
-      )}
+      ) : null}
 
       {/* Value props */}
       <section className="mx-auto grid max-w-6xl gap-6 px-4 py-14 sm:grid-cols-2 lg:grid-cols-4">

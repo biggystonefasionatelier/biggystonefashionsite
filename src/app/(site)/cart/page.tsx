@@ -75,7 +75,16 @@ export default function CartPage() {
             <div className="flex-1">
               <p className="font-medium">{item.name}</p>
               {item.color && <p className="text-xs text-neutral-500">Color: {item.color}</p>}
-              <p className="text-sm text-neutral-500">₦{item.price.toLocaleString()}</p>
+              {item.originalPrice ? (
+                <p className="text-sm">
+                  <span className="mr-1.5 text-neutral-400 line-through">
+                    ₦{item.originalPrice.toLocaleString()}
+                  </span>
+                  <span className="font-medium text-red-600">₦{item.price.toLocaleString()}</span>
+                </p>
+              ) : (
+                <p className="text-sm text-neutral-500">₦{item.price.toLocaleString()}</p>
+              )}
               {item.orderType === "wholesale" && (
                 <p className="text-xs text-brand-gold">Pre-order wholesale</p>
               )}

@@ -6,6 +6,7 @@ import SignupPopup from "@/components/SignupPopup";
 import SalePopup from "@/components/SalePopup";
 import ReferralCapture from "@/components/ReferralCapture";
 import { isPromoActive } from "@/lib/promo";
+import { isFlashSaleActive } from "@/lib/flashSale";
 
 export default function SiteLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -15,7 +16,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
       <main className="flex-1">{children}</main>
       <Footer />
       <WhatsAppButton />
-      {isPromoActive() ? <SalePopup /> : <SignupPopup />}
+      {isFlashSaleActive() || isPromoActive() ? <SalePopup /> : <SignupPopup />}
     </CartProvider>
   );
 }

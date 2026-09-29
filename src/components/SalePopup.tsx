@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { PROMO, promoDaysRemaining } from "@/lib/promo";
+import { FLASH_SALE, isFlashSaleActive, flashSaleEndLabel } from "@/lib/flashSale";
+import { PROMO, isPromoActive, promoDaysRemaining } from "@/lib/promo";
 import SignupForm from "./SignupForm";
 
 // See SignupPopup.tsx for why this suppresses per-session instead of
@@ -28,6 +29,11 @@ export default function SalePopup() {
 
   if (!visible) return null;
 
+  // The flash sale (automatic, no code, better deal) takes priority over
+  // the older September code-based promo whenever both happen to be
+  // active at once - showing both at the same time would just confuse
+  // shoppers about which discount actually applies.
+  const flashSaleActive = isFlashSaleActive();
   const daysLeft = promoDaysRemaining();
 
   return (
@@ -47,15 +53,31 @@ export default function SalePopup() {
           ✕
         </button>
 
-        <p className="text-xs font-semibold uppercase tracking-wide text-brand-gold">
-          September Sale — {daysLeft} {daysLeft === 1 ? "day" : "days"} left
-        </p>
-        <h2 className="mt-1 pr-6 text-lg font-bold">{PROMO.percent}% off everything</h2>
-        <p className="mt-2 text-sm text-neutral-600">
-          Use code <strong className="font-mono">{PROMO.code}</strong> at checkout. Plus free
-          delivery on any order ₦{PROMO.freeDeliveryThreshold.toLocaleString()} and above — no
-          code needed.
-        </p>
+        {flashSaleActive ? (
+          <>
+            <p className="text-xs font-semibold uppercase tracking-wide text-brand-gold">
+              Flash Sale — ends {flashSaleEndLabel()}
+            </p>
+            <h2 className="mt-1 pr-6 text-lg font-bold">
+              {FLASH_SALE.percent}% off pieces ₦{FLASH_SALE.minPrice.toLocaleString()} and up
+            </h2>
+            <p className="mt-2 text-sm text-neutral-600">
+              Prices are already discounted across the shop — no code needed.
+            </p>
+          </>
+        ) : (
+          <>
+            <p className="text-xs font-semibold uppercase tracking-wide text-brand-gold">
+              September Sale — {daysLeft} {daysLeft === 1 ? "day" : "days"} left
+            </p>
+            <h2 className="mt-1 pr-6 text-lg font-bold">{PROMO.percent}% off everything</h2>
+            <p className="mt-2 text-sm text-neutral-600">
+              Use code <strong className="font-mono">{PROMO.code}</strong> at checkout. Plus free
+              delivery on any order ₦{PROMO.freeDeliveryThreshold.toLocaleString()} and above — no
+              code needed.
+            </p>
+          </>
+        )}
 
         <p className="mt-4 text-xs text-neutral-500">
           Drop your details for first access to new drops too:

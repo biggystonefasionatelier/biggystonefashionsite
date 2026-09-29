@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useCart } from "./CartContext";
 import type { Product } from "@/lib/products";
+import { flashSaleUnitPrice, isFlashSaleActive, isFlashSaleEligible } from "@/lib/flashSale";
 
 export default function ProductCard({ product }: { product: Product }) {
   const { addItem } = useCart();
@@ -10,12 +11,17 @@ export default function ProductCard({ product }: { product: Product }) {
   const hasColors = !!product.colors && product.colors.length > 0;
   const [color, setColor] = useState(hasColors ? "" : undefined);
 
+  const onSale =
+    product.product_type === "retail" && isFlashSaleActive() && isFlashSaleEligible(product.price);
+  const salePrice = flashSaleUnitPrice(product.price, product.product_type);
+
   function handleAdd() {
     if (hasColors && !color) return;
     addItem({
       productId: product.id,
       name: product.name,
-      price: product.price,
+      price: salePrice,
+      originalPrice: onSale ? product.price : undefined,
       quantity: 1,
       imageUrl: product.image_url ?? undefined,
       orderType: product.product_type,
@@ -42,9 +48,16 @@ export default function ProductCard({ product }: { product: Product }) {
         )}
       </div>
       <p className="mt-3 font-medium">{product.name}</p>
-      <p className="text-sm text-neutral-500">
-        ₦{product.price.toLocaleString()}
-      </p>
+      {onSale ? (
+        <p className="text-sm">
+          <span className="mr-1.5 text-neutral-400 line-through">
+            ₦{product.price.toLocaleString()}
+          </span>
+          <span className="font-semibold text-red-600">₦{salePrice.toLocaleString()}</span>
+        </p>
+      ) : (
+        <p className="text-sm text-neutral-500">₦{product.price.toLocaleString()}</p>
+      )}
       {hasColors && (
         <select
           value={color}
