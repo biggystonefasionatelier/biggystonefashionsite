@@ -18,7 +18,7 @@ export type Order = {
   order_type: "retail" | "wholesale";
   status: string;
   sent_to_supplier?: boolean;
-  payment_method?: "paystack" | "opay" | null;
+  payment_method?: "paystack" | "opay" | "paystack_invoice" | null;
   total: number;
   deposit_only: boolean;
   created_at: string;
@@ -67,11 +67,22 @@ export default function OrderCard({
                 Opay
               </span>
             )}
+            {o.payment_method === "paystack_invoice" && (
+              <span className="ml-2 rounded-full bg-brand-gold-light px-2 py-0.5 text-xs font-medium text-neutral-800">
+                Pay-for-me link
+              </span>
+            )}
           </p>
           {o.payment_method === "opay" && o.status === "pending" && (
             <p className="mt-1 text-xs text-neutral-500">
               Awaiting Opay confirmation — check your Opay app/WhatsApp,
               then mark this paid.
+            </p>
+          )}
+          {o.payment_method === "paystack_invoice" && o.status === "pending" && (
+            <p className="mt-1 text-xs text-neutral-500">
+              Customer shared a payment link with someone else — Paystack
+              will mark this paid automatically once they pay.
             </p>
           )}
           <p className="text-xs text-neutral-500">

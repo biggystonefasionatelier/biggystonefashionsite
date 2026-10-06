@@ -146,6 +146,17 @@ export function findDeliveryZone(zoneId: string | undefined): DeliveryZone | und
   return DELIVERY_ZONES.find((z) => z.id === zoneId);
 }
 
+export type DeliveryAreaOption = { area: string; zone: DeliveryZone };
+
+/**
+ * One row per named area (not per zone) so a customer can search by the
+ * actual place they live - "Ajah", "Yaba" - instead of having to guess
+ * which internal "Mainland 3" / "Island 1" grouping it falls under.
+ */
+export function allDeliveryAreas(): DeliveryAreaOption[] {
+  return DELIVERY_ZONES.flatMap((zone) => zone.areas.map((area) => ({ area, zone })));
+}
+
 /**
  * Pickup is always free. Delivery is priced by zone (see DELIVERY_ZONES).
  * No standing Friday promo anymore - the only current free-delivery rule

@@ -3,21 +3,10 @@
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useCart } from "@/components/CartContext";
-import { DELIVERY_ZONES, type DeliveryZone } from "@/lib/delivery";
 import { calculateBundleDiscount } from "@/lib/bundleDiscount";
+import DeliveryAreaPicker from "@/components/DeliveryAreaPicker";
 
 type DeliveryMethod = "pickup" | "delivery";
-
-const ZONE_GROUPS = ["Lagos Mainland", "Lagos Island", "Outside Lagos"] as const;
-
-// Leads with actual place names instead of the internal "Island 1" /
-// "Mainland 3" labels, which look identical to customers with no way to
-// tell which one matches where they live.
-function zoneOptionLabel(zone: DeliveryZone): string {
-  const preview = zone.areas.slice(0, 3).join(", ");
-  const extra = zone.areas.length > 3 ? ` +${zone.areas.length - 3} more` : "";
-  return `${preview}${extra} — ₦${zone.fee.toLocaleString()} (${zone.eta})`;
-}
 
 type DiscountPreviewState = {
   status: "idle" | "loading" | "applied" | "error";
@@ -30,22 +19,25 @@ const OPAY_ACCOUNT_NAME = "Biggystone Fashion Atelier";
 const OPAY_ACCOUNT_NUMBER = "7037441233";
 
 type PreorderResult = { total: number; reference: string; customerName: string };
+type InvoiceResult = { total: number; reference: string; customerName: string };
 
 export default function CheckoutPage() {
   const { items, subtotal, clear } = useCart();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>("pickup");
-  const [deliveryZone, setDeliveryZone] = useState(DELIVERY_ZONES[0].id);
+  const [deliveryZone, setDeliveryZone] = useState("");
   const [email, setEmail] = useState("");
   const [discountCode, setDiscountCode] = useState("");
+  const [payer, setPayer] = useState<"self" | "someone_else">("self");
   const [discountPreview, setDiscountPreview] = useState<DiscountPreviewState>({
     status: "idle",
     message: "",
     amount: 0,
   });
   const [preorderResult, setPreorderResult] = useState<PreorderResult | null>(null);
-  const selectedZone = DELIVERY_ZONES.find((z) => z.id === deliveryZone);
+  const [invoiceResult, setInvoiceResult] = useState<InvoiceResult | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   if (preorderResult) {
     const whatsappMessage = [
@@ -94,6 +86,60 @@ export default function CheckoutPage() {
         <p className="mt-3 text-center text-xs text-neutral-500">
           Your reference: <span className="font-mono">{preorderResult.reference}</span>
         </p>
+      </div>
+    );
+  }
+
+  if (invoiceResult) {
+    const invoiceLink =
+      typeof window !== "undefined"
+        ? `${window.location.origin}/invoice/${invoiceResult.reference}`
+        : `/invoice/${invoiceResult.reference}`;
+    const shareMessage = [
+      `Hi! ${invoiceResult.customerName} picked out some pieces from Biggystone Fashion Atelier.`,
+      `Could you help pay ₦${invoiceResult.total.toLocaleString()}? Tap the link to pay:`,
+      invoiceLink,
+    ].join("\n");
+    const whatsappShareHref = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareMessage)}`;
+
+    return (
+      <div className="mx-auto max-w-xl px-4 py-16">
+        <h1 className="text-2xl font-bold">Your order is saved — share this to get paid for</h1>
+        <p className="mt-2 text-sm text-neutral-600">
+          Send the link below to whoever is paying. Once they pay, your
+          order goes through automatically - nothing else for you to do.
+        </p>
+
+        <div className="mt-6 rounded-xl border border-black/10 bg-neutral-50 p-5">
+          <p className="text-xs text-neutral-500">Amount to pay</p>
+          <p className="text-2xl font-bold">₦{invoiceResult.total.toLocaleString()}</p>
+          <p className="mt-3 break-all rounded-md border border-black/10 bg-white px-3 py-2 text-xs text-neutral-700">
+            {invoiceLink}
+          </p>
+        </div>
+
+        <a
+          href={whatsappShareHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-6 block w-full rounded-full bg-brand-black py-3 text-center text-sm text-brand-gold-light"
+        >
+          Share on WhatsApp
+        </a>
+        <button
+          type="button"
+          onClick={() => {
+            navigator.clipboard.writeText(invoiceLink);
+            setLinkCopied(true);
+            setTimeout(() => setLinkCopied(false), 2000);
+          }}
+          className="mt-3 w-full rounded-full border border-black/15 py-3 text-sm"
+        >
+          {linkCopied ? "Copied ✓" : "Copy link"}
+        </button>
+        <Link href={`/invoice/${invoiceResult.reference}`} className="mt-4 block text-center text-xs underline">
+          Or pay this yourself instead →
+        </Link>
       </div>
     );
   }
@@ -167,6 +213,12 @@ export default function CheckoutPage() {
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
+
+    if (orderType === "retail" && deliveryMethod === "delivery" && !deliveryZone) {
+      setError("Please type your area and pick it from the list before continuing.");
+      return;
+    }
+
     setSubmitting(true);
 
     const form = new FormData(e.currentTarget);
@@ -201,22 +253,43 @@ export default function CheckoutPage() {
         return;
       }
 
+      const payload = {
+        customerName,
+        email,
+        phone: String(form.get("phone") ?? ""),
+        address: String(form.get("address") ?? ""),
+        city: String(form.get("city") ?? ""),
+        orderType,
+        discountCode,
+        deliveryMethod,
+        deliveryZone: deliveryMethod === "delivery" ? deliveryZone : undefined,
+        deliveryNote: String(form.get("deliveryNote") ?? ""),
+        items: items.map((i) => ({ productId: i.productId, quantity: i.quantity, color: i.color })),
+      };
+
+      if (payer === "someone_else") {
+        const res = await fetch("/api/checkout/create-invoice", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          setError(data.error ?? "Checkout failed. Please try again.");
+          setSubmitting(false);
+          return;
+        }
+
+        clear();
+        setInvoiceResult({ total: data.total, reference: data.reference, customerName });
+        return;
+      }
+
       const res = await fetch("/api/checkout/initialize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          customerName,
-          email,
-          phone: String(form.get("phone") ?? ""),
-          address: String(form.get("address") ?? ""),
-          city: String(form.get("city") ?? ""),
-          orderType,
-          discountCode,
-          deliveryMethod,
-          deliveryZone: deliveryMethod === "delivery" ? deliveryZone : undefined,
-          deliveryNote: String(form.get("deliveryNote") ?? ""),
-          items: items.map((i) => ({ productId: i.productId, quantity: i.quantity, color: i.color })),
-        }),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
@@ -325,6 +398,30 @@ export default function CheckoutPage() {
         {orderType === "retail" && (
           <>
             <div className="rounded-md border border-black/15 p-3">
+              <p className="text-xs font-medium text-neutral-700">Who&apos;s paying?</p>
+              <div className="mt-2 grid gap-2 text-sm">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="payerChoice"
+                    checked={payer === "self"}
+                    onChange={() => setPayer("self")}
+                  />
+                  I&apos;ll pay now
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="payerChoice"
+                    checked={payer === "someone_else"}
+                    onChange={() => setPayer("someone_else")}
+                  />
+                  Someone else will pay — give me a link to share
+                </label>
+              </div>
+            </div>
+
+            <div className="rounded-md border border-black/15 p-3">
               <p className="text-xs font-medium text-neutral-700">Pickup or delivery?</p>
               <div className="mt-2 grid gap-2 text-sm">
                 <label className="flex items-center gap-2">
@@ -348,26 +445,7 @@ export default function CheckoutPage() {
 
                 {deliveryMethod === "delivery" && (
                   <div className="ml-6 grid gap-2">
-                    <select
-                      value={deliveryZone}
-                      onChange={(e) => setDeliveryZone(e.target.value)}
-                      className="rounded-md border border-black/15 px-2 py-2 text-sm"
-                    >
-                      {ZONE_GROUPS.map((group) => (
-                        <optgroup key={group} label={group}>
-                          {DELIVERY_ZONES.filter((z) => z.group === group).map((z) => (
-                            <option key={z.id} value={z.id}>
-                              {zoneOptionLabel(z)}
-                            </option>
-                          ))}
-                        </optgroup>
-                      ))}
-                    </select>
-                    {selectedZone && (
-                      <p className="text-xs text-neutral-500">
-                        Covers: {selectedZone.areas.join(", ")}
-                      </p>
-                    )}
+                    <DeliveryAreaPicker zoneId={deliveryZone} onSelect={setDeliveryZone} />
                   </div>
                 )}
               </div>
@@ -446,9 +524,13 @@ export default function CheckoutPage() {
             ? submitting
               ? "Saving your order..."
               : "Continue to Opay payment"
-            : submitting
-              ? "Redirecting to payment..."
-              : "Pay with Paystack"}
+            : payer === "someone_else"
+              ? submitting
+                ? "Saving your order..."
+                : "Get a link to share"
+              : submitting
+                ? "Redirecting to payment..."
+                : "Pay with Paystack"}
         </button>
 
         {error && <p className="text-xs text-red-600">{error}</p>}

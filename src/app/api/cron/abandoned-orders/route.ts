@@ -12,7 +12,7 @@ type OrderDoc = {
   phone: string;
   total: number;
   order_type: "retail" | "wholesale";
-  payment_method?: "paystack" | "opay" | null;
+  payment_method?: "paystack" | "opay" | "paystack_invoice" | null;
   order_items: OrderItemDoc[];
   created_at: Date;
 };
@@ -28,7 +28,11 @@ type OrderDoc = {
  * Opay pre-orders are excluded - those are *always* "pending" until Faith
  * manually confirms the transfer and marks them paid, so every one of
  * them would otherwise get flagged as "abandoned" the day after it's
- * placed, which isn't true and isn't useful.
+ * placed, which isn't true and isn't useful. Shareable "pay for me"
+ * invoices (payment_method "paystack_invoice") are excluded for the same
+ * reason - they're meant to sit pending until whoever the link was sent
+ * to gets around to paying, which can reasonably take longer than
+ * ABANDONED_AFTER_MINUTES.
  */
 export async function GET(request: Request) {
   const authHeader = request.headers.get("authorization");
@@ -43,7 +47,7 @@ export async function GET(request: Request) {
     .collection<OrderDoc>("orders")
     .find({
       status: "pending",
-      payment_method: { $ne: "opay" },
+      payment_method: { $nin: ["opay", "paystack_invoice"] },
       created_at: { $lt: cutoff },
       abandoned_notified: { $ne: true },
     })
