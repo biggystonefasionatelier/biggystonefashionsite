@@ -50,9 +50,9 @@ export default function PreorderProductCard({
         )}
       </div>
       <p className="mt-3 font-medium">{product.name}</p>
-      <p className="text-sm text-neutral-500">₦{product.price.toLocaleString()} / unit</p>
+      <p className="text-sm text-black">₦{product.price.toLocaleString()} / unit</p>
       {!!categoryMoq && (
-        <p className="text-xs text-neutral-500">
+        <p className="text-xs text-black">
           {product.category} minimum: {categoryMoq} pieces total (mix any designs)
         </p>
       )}
