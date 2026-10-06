@@ -24,33 +24,10 @@ export default async function WholesalePage() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-12">
       <h1 className="text-2xl font-bold">Wholesale</h1>
-      <p className="mt-2 max-w-2xl text-sm text-neutral-600">
-        Buying to resell? We offer wholesale pricing two ways. Message us
-        to get verified as a reseller, and we&apos;ll walk you through
-        pricing and get you set up to order directly on the site.
-      </p>
-
-      <div className="mt-8 grid gap-4 sm:grid-cols-2">
-        <div className="rounded-xl border border-black/10 p-5">
-          <h2 className="font-bold">Wholesale</h2>
-          <p className="mt-1 text-sm text-neutral-600">
-            Pieces already in stock, ready to ship now — the same catalog
-            everyone shops, at reseller pricing once you&apos;re verified.
-          </p>
-        </div>
-        <div className="rounded-xl border border-black/10 p-5">
-          <h2 className="font-bold">Pre-Order Wholesale</h2>
-          <p className="mt-1 text-sm text-neutral-600">
-            Pieces made or sourced specifically for larger orders — longer
-            lead time. Pick what you want below, pay to our Opay, and
-            you&apos;re set — no need to message us first.
-          </p>
-        </div>
-      </div>
 
       {products.length > 0 && (
         <>
-          <h2 className="mt-12 font-bold">Pre-order pieces</h2>
+          <h2 className="mt-6 font-bold">Pre-order pieces</h2>
           <p className="mt-1 max-w-2xl text-sm text-neutral-600">
             Tap <strong>Add</strong> on every piece you want and set how
             many. These are made/sourced to order, so lead time is longer
