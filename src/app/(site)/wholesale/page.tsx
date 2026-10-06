@@ -2,7 +2,6 @@ import Link from "next/link";
 import { getProducts } from "@/lib/products";
 import { getDb } from "@/lib/mongodb";
 import { getCategoryMoqMap } from "@/lib/categoryMoq";
-import WholesaleInquiryForm from "@/components/WholesaleInquiryForm";
 import PreorderBrowser from "@/components/PreorderBrowser";
 
 export const metadata = { title: "Wholesale | Biggystone Fashion Atelier" };
@@ -88,17 +87,6 @@ export default async function WholesalePage() {
           </Link>
         </>
       )}
-
-      <div className="mt-12 rounded-xl border border-black/10 bg-neutral-50 p-6">
-        <h2 className="font-bold">Interested in wholesale or pre-order pricing?</h2>
-        <p className="mt-1 text-sm text-neutral-600">
-          Tell us what you&apos;re looking for and we&apos;ll follow up with
-          pricing and next steps.
-        </p>
-        <div className="mt-4">
-          <WholesaleInquiryForm />
-        </div>
-      </div>
     </div>
   );
 }
