@@ -87,7 +87,7 @@ export default function AboutPage() {
       </ul>
 
       <h2 className="mt-10 font-bold">Wholesale</h2>
-      <p className="mt-3 text-neutral-700">
+      <p className="mt-3 text-black">
         Buying to resell? We offer wholesale pricing two ways. Message us
         to get verified as a reseller, and we&apos;ll walk you through
         pricing and get you set up to order directly on the site.
@@ -95,14 +95,14 @@ export default function AboutPage() {
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
         <div className="rounded-xl border border-black/10 p-5">
           <h3 className="font-bold">Wholesale</h3>
-          <p className="mt-1 text-sm text-neutral-600">
+          <p className="mt-1 text-sm text-black">
             Pieces already in stock, ready to ship now — the same catalog
             everyone shops, at reseller pricing once you&apos;re verified.
           </p>
         </div>
         <div className="rounded-xl border border-black/10 p-5">
           <h3 className="font-bold">Pre-Order Wholesale</h3>
-          <p className="mt-1 text-sm text-neutral-600">
+          <p className="mt-1 text-sm text-black">
             Pieces made or sourced specifically for larger orders — longer
             lead time. Pick what you want on the{" "}
             <Link href="/wholesale" className="underline">

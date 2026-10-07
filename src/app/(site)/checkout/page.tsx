@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useCart } from "@/components/CartContext";
 import { calculateBundleDiscount } from "@/lib/bundleDiscount";
 import DeliveryAreaPicker from "@/components/DeliveryAreaPicker";
+import { WHATSAPP_NUMBER, OPAY_ACCOUNT_NAME, OPAY_ACCOUNT_NUMBER } from "@/lib/contact";
 
 type DeliveryMethod = "pickup" | "delivery";
 
@@ -13,10 +14,6 @@ type DiscountPreviewState = {
   message: string;
   amount: number;
 };
-
-const WHATSAPP_NUMBER = "2348148263705";
-const OPAY_ACCOUNT_NAME = "Biggystone Fashion Atelier";
-const OPAY_ACCOUNT_NUMBER = "7037441233";
 
 type PreorderResult = { total: number; reference: string; customerName: string };
 type InvoiceResult = { total: number; reference: string; customerName: string };
@@ -106,8 +103,8 @@ export default function CheckoutPage() {
       <div className="mx-auto max-w-xl px-4 py-16">
         <h1 className="text-2xl font-bold">Your order is saved — share this to get paid for</h1>
         <p className="mt-2 text-sm text-neutral-600">
-          Send the link below to whoever is paying. Once they pay, your
-          order goes through automatically - nothing else for you to do.
+          Send the link below to whoever is paying. It shows them exactly
+          what to do - nothing else for you to do.
         </p>
 
         <div className="mt-6 rounded-xl border border-black/10 bg-neutral-50 p-5">
@@ -249,7 +246,11 @@ export default function CheckoutPage() {
         }
 
         clear();
-        setPreorderResult({ total: data.total, reference: data.reference, customerName });
+        if (payer === "someone_else") {
+          setInvoiceResult({ total: data.total, reference: data.reference, customerName });
+        } else {
+          setPreorderResult({ total: data.total, reference: data.reference, customerName });
+        }
         return;
       }
 
@@ -395,32 +396,32 @@ export default function CheckoutPage() {
           className="rounded-md border border-black/15 px-3 py-2 text-sm"
         />
 
+        <div className="rounded-md border border-black/15 p-3">
+          <p className="text-xs font-medium text-neutral-700">Who&apos;s paying?</p>
+          <div className="mt-2 grid gap-2 text-sm">
+            <label className="flex items-center gap-2">
+              <input
+                type="radio"
+                name="payerChoice"
+                checked={payer === "self"}
+                onChange={() => setPayer("self")}
+              />
+              I&apos;ll pay now
+            </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="radio"
+                name="payerChoice"
+                checked={payer === "someone_else"}
+                onChange={() => setPayer("someone_else")}
+              />
+              Someone else will pay — give me a link to share
+            </label>
+          </div>
+        </div>
+
         {orderType === "retail" && (
           <>
-            <div className="rounded-md border border-black/15 p-3">
-              <p className="text-xs font-medium text-neutral-700">Who&apos;s paying?</p>
-              <div className="mt-2 grid gap-2 text-sm">
-                <label className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    name="payerChoice"
-                    checked={payer === "self"}
-                    onChange={() => setPayer("self")}
-                  />
-                  I&apos;ll pay now
-                </label>
-                <label className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    name="payerChoice"
-                    checked={payer === "someone_else"}
-                    onChange={() => setPayer("someone_else")}
-                  />
-                  Someone else will pay — give me a link to share
-                </label>
-              </div>
-            </div>
-
             <div className="rounded-md border border-black/15 p-3">
               <p className="text-xs font-medium text-neutral-700">Pickup or delivery?</p>
               <div className="mt-2 grid gap-2 text-sm">
@@ -520,14 +521,14 @@ export default function CheckoutPage() {
           disabled={submitting}
           className="mt-2 rounded-full bg-brand-black py-3 text-sm text-brand-gold-light disabled:opacity-60"
         >
-          {orderType === "wholesale"
+          {payer === "someone_else"
             ? submitting
               ? "Saving your order..."
-              : "Continue to Opay payment"
-            : payer === "someone_else"
+              : "Get a link to share"
+            : orderType === "wholesale"
               ? submitting
                 ? "Saving your order..."
-                : "Get a link to share"
+                : "Continue to Opay payment"
               : submitting
                 ? "Redirecting to payment..."
                 : "Pay with Paystack"}

@@ -31,12 +31,14 @@ export async function GET(
   try {
     const db = await getDb();
     const order = await db.collection<OrderDoc>("orders").findOne(
-      { paystack_reference: reference, payment_method: "paystack_invoice" },
+      { paystack_reference: reference, payment_method: { $in: ["paystack_invoice", "opay"] } },
       {
         projection: {
           customer_name: 1,
           status: 1,
           total: 1,
+          order_type: 1,
+          payment_method: 1,
           order_items: 1,
           delivery_method: 1,
           delivery_zone_label: 1,
@@ -75,7 +77,10 @@ export async function POST(
     const order = await orders.findOne({ paystack_reference: reference, payment_method: "paystack_invoice" });
 
     if (!order) {
-      return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "This invoice isn't payable by card - check the invoice page for how to pay." },
+        { status: 404 }
+      );
     }
 
     if (order.status !== "pending") {

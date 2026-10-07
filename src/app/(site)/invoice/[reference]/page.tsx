@@ -3,12 +3,15 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { WHATSAPP_NUMBER, OPAY_ACCOUNT_NAME, OPAY_ACCOUNT_NUMBER } from "@/lib/contact";
 
 type InvoiceItem = { product_name: string; quantity: number; unit_price: number };
 type InvoiceOrder = {
   customer_name: string;
   status: string;
   total: number;
+  order_type: "retail" | "wholesale";
+  payment_method?: "paystack_invoice" | "opay" | null;
   order_items: InvoiceItem[];
   delivery_method?: "pickup" | "delivery" | null;
   delivery_zone_label?: string | null;
@@ -109,6 +112,17 @@ export default function InvoicePage() {
     );
   }
 
+  const isWholesale = order.order_type === "wholesale";
+
+  const opayWhatsappMessage = [
+    `Hi Biggystone! I just paid for ${order.customer_name}'s pre-order.`,
+    `Name: ${order.customer_name}`,
+    `Total paid: ₦${order.total.toLocaleString()}`,
+    `Reference: ${reference}`,
+    `(Attaching my payment receipt)`,
+  ].join("\n");
+  const opayWhatsappHref = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(opayWhatsappMessage)}`;
+
   return (
     <div className="mx-auto max-w-xl px-4 py-16">
       <h1 className="text-2xl font-bold">Payment request from {order.customer_name}</h1>
@@ -138,14 +152,53 @@ export default function InvoicePage() {
         </div>
       </div>
 
-      <button
-        onClick={handlePay}
-        disabled={paying}
-        className="mt-6 w-full rounded-full bg-brand-black py-3 text-sm text-brand-gold-light disabled:opacity-60"
-      >
-        {paying ? "Redirecting to payment..." : `Pay ₦${order.total.toLocaleString()} with Paystack`}
-      </button>
-      {payError && <p className="mt-2 text-xs text-red-600">{payError}</p>}
+      {isWholesale ? (
+        <>
+          <p className="mt-6 text-sm text-neutral-600">
+            This is a pre-order piece, paid by bank transfer to Opay. Send
+            the amount above, then send the receipt on WhatsApp so it can
+            be confirmed.
+          </p>
+          <div className="mt-4 rounded-xl border border-black/10 bg-neutral-50 p-5">
+            <p className="text-xs text-neutral-500">Amount to pay</p>
+            <p className="text-2xl font-bold">₦{order.total.toLocaleString()}</p>
+            <div className="mt-4 space-y-1 text-sm">
+              <p>
+                <span className="text-neutral-500">Bank:</span> Opay
+              </p>
+              <p>
+                <span className="text-neutral-500">Account name:</span> {OPAY_ACCOUNT_NAME}
+              </p>
+              <p>
+                <span className="text-neutral-500">Account number:</span>{" "}
+                <span className="font-mono font-medium">{OPAY_ACCOUNT_NUMBER}</span>
+              </p>
+            </div>
+          </div>
+          <a
+            href={opayWhatsappHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-6 block w-full rounded-full bg-brand-black py-3 text-center text-sm text-brand-gold-light"
+          >
+            I&apos;ve paid — send receipt on WhatsApp
+          </a>
+          <p className="mt-3 text-center text-xs text-neutral-500">
+            Reference: <span className="font-mono">{reference}</span>
+          </p>
+        </>
+      ) : (
+        <>
+          <button
+            onClick={handlePay}
+            disabled={paying}
+            className="mt-6 w-full rounded-full bg-brand-black py-3 text-sm text-brand-gold-light disabled:opacity-60"
+          >
+            {paying ? "Redirecting to payment..." : `Pay ₦${order.total.toLocaleString()} with Paystack`}
+          </button>
+          {payError && <p className="mt-2 text-xs text-red-600">{payError}</p>}
+        </>
+      )}
     </div>
   );
 }
