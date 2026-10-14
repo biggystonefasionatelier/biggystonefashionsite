@@ -101,7 +101,9 @@ export default function ProductForm({
         return;
       }
 
-      router.push("/admin/products");
+      router.push(
+        productType === "wholesale" ? "/admin/preorder/products" : "/admin/products"
+      );
       router.refresh();
     } catch {
       setError("Network error. Try again.");
@@ -114,7 +116,9 @@ export default function ProductForm({
     if (!confirm(`Delete "${product.name}"? This can't be undone.`)) return;
 
     await fetch(`/api/admin/products/${product.id}`, { method: "DELETE" });
-    router.push("/admin/products");
+    router.push(
+      product.product_type === "wholesale" ? "/admin/preorder/products" : "/admin/products"
+    );
     router.refresh();
   }
 
