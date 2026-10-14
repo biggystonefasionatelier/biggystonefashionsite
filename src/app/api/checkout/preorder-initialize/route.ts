@@ -60,7 +60,7 @@ export async function POST(request: Request) {
     if (!cart.ok) {
       return NextResponse.json({ error: cart.error }, { status: 400 });
     }
-    const { orderItems, total } = cart;
+    const { orderItems, dozenDiscount, amountDue } = cart;
 
     // No real Paystack transaction happens here, but paystack_reference
     // has a unique index with no sparse option (see database/init-indexes.mjs),
@@ -76,7 +76,7 @@ export async function POST(request: Request) {
       order_type: orderType,
       status: "pending",
       payment_method: "opay",
-      total,
+      total: amountDue,
       deposit_only: false,
       paystack_reference: reference,
       created_at: new Date(),
@@ -86,6 +86,7 @@ export async function POST(request: Request) {
       gift_voucher_code: null,
       referral_credit_ids: null,
       bundle_discount_amount: null,
+      dozen_discount_amount: dozenDiscount || null,
       delivery_method: null,
       delivery_zone: null,
       delivery_zone_label: null,
@@ -96,7 +97,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       orderId: insertResult.insertedId.toString(),
       reference,
-      total,
+      total: amountDue,
     });
   } catch (err) {
     console.error("Pre-order checkout failed:", err);

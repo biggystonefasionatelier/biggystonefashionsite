@@ -1,7 +1,7 @@
 import type { Db } from "mongodb";
 import { ObjectId } from "mongodb";
 import { toProduct, type ProductDoc } from "@/lib/products";
-import { getCategoryMoqMap } from "@/lib/categoryMoq";
+import { getCategoryMoqMap, getCategoryDozenPriceMap } from "@/lib/categoryMoq";
 import {
   BIRTHDAY_DISCOUNT_PERCENT,
   checkBirthdayDiscountEligibility,
@@ -51,6 +51,7 @@ export type ResolvedCart =
       }[];
       total: number;
       bundleDiscount: number;
+      dozenDiscount: number;
       amountDue: number;
     }
   | { ok: false; error: string };
@@ -136,7 +137,37 @@ export async function resolveCart(
         )
       : 0;
 
-  let amountDue = total - bundleDiscount;
+  // Dozen pricing is a per-category bulk discount, same mixing rule as
+  // MOQ: every full 12 pieces across any designs in a category are
+  // charged at the configured flat dozen rate instead of 12x the normal
+  // per-piece price. A weighted average unit price handles categories
+  // where designs happen to be priced slightly differently.
+  let dozenDiscount = 0;
+  if (orderType === "wholesale") {
+    const categoryDozenPriceMap = await getCategoryDozenPriceMap(db);
+    if (categoryDozenPriceMap.size > 0) {
+      const categoryTotals = new Map<string, { qty: number; value: number }>();
+      for (const item of orderItems) {
+        const product = products.find((p) => p.id === item.product_id)!;
+        const category = product.category || "Uncategorized";
+        const entry = categoryTotals.get(category) ?? { qty: 0, value: 0 };
+        entry.qty += item.quantity;
+        entry.value += item.unit_price * item.quantity;
+        categoryTotals.set(category, entry);
+      }
+      for (const [category, { qty, value }] of categoryTotals) {
+        const dozenPrice = categoryDozenPriceMap.get(category);
+        if (!dozenPrice) continue;
+        const fullDozens = Math.floor(qty / 12);
+        if (fullDozens === 0) continue;
+        const avgUnitPrice = value / qty;
+        const saved = avgUnitPrice * 12 * fullDozens - dozenPrice * fullDozens;
+        if (saved > 0) dozenDiscount += Math.round(saved);
+      }
+    }
+  }
+
+  let amountDue = total - bundleDiscount - dozenDiscount;
   if (orderType === "wholesale" && depositOnly) {
     const depositPercents = products
       .map((p) => p.deposit_percent ?? 100)
@@ -145,7 +176,7 @@ export async function resolveCart(
     amountDue = Math.round((total * depositPercent) / 100);
   }
 
-  return { ok: true, products, orderItems, total, bundleDiscount, amountDue };
+  return { ok: true, products, orderItems, total, bundleDiscount, dozenDiscount, amountDue };
 }
 
 export type ResolvedDiscount =

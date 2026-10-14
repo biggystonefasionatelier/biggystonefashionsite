@@ -28,6 +28,7 @@ export type Order = {
   discount_code?: string | null;
   discount_amount?: number | null;
   bundle_discount_amount?: number | null;
+  dozen_discount_amount?: number | null;
   delivery_method?: "pickup" | "delivery" | null;
   delivery_zone_label?: string | null;
   delivery_fee?: number | null;
@@ -153,6 +154,12 @@ export default function OrderCard({
       {o.bundle_discount_amount ? (
         <p className="mt-2 border-t border-black/5 pt-2 text-xs text-neutral-600">
           📦 Buy-3 bundle discount — ₦{Number(o.bundle_discount_amount).toLocaleString()} off
+        </p>
+      ) : null}
+
+      {o.dozen_discount_amount ? (
+        <p className="mt-2 border-t border-black/5 pt-2 text-xs text-neutral-600">
+          🎁 Dozen pricing applied — ₦{Number(o.dozen_discount_amount).toLocaleString()} off
         </p>
       ) : null}
 

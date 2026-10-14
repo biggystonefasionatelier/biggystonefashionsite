@@ -17,6 +17,7 @@ export async function GET() {
       category,
       moq: byCategory.get(category)?.moq ?? null,
       price: byCategory.get(category)?.price ?? null,
+      dozenPrice: byCategory.get(category)?.dozenPrice ?? null,
     }));
 
     return NextResponse.json({ categories });
@@ -31,6 +32,7 @@ const updateSchema = z.object({
   moq: z.number().int().min(0),
   price: z.number().min(0).optional(),
   applyPriceToExisting: z.boolean().optional(),
+  dozenPrice: z.number().min(0).optional(),
 });
 
 export async function POST(request: Request) {
@@ -51,17 +53,29 @@ export async function POST(request: Request) {
 
   try {
     const db = await getDb();
-    const { category, moq, price } = parsed.data;
+    const { category, moq, price, dozenPrice } = parsed.data;
+
+    const hasDozenPrice = dozenPrice !== undefined && dozenPrice > 0;
 
     // moq: 0 means "no minimum" - but we may still need to keep/update the
-    // row if a price is set, so only delete the doc when there's neither a
-    // moq nor a price to remember for this category.
-    if (moq === 0 && price === undefined) {
+    // row if a price or dozen price is set, so only delete the doc when
+    // there's nothing left to remember for this category.
+    if (moq === 0 && price === undefined && !hasDozenPrice) {
       await db.collection("category_moq").deleteOne({ category });
     } else {
-      const set: { moq: number; price?: number } = { moq };
+      const set: { moq: number; price?: number; dozenPrice?: number } = { moq };
       if (price !== undefined) set.price = price;
-      await db.collection("category_moq").updateOne({ category }, { $set: set }, { upsert: true });
+      if (hasDozenPrice) set.dozenPrice = dozenPrice;
+
+      const update: { $set: typeof set; $unset?: { dozenPrice: "" } } = { $set: set };
+      // dozenPrice: 0 explicitly means "clear the dozen discount" - remove
+      // the field rather than storing a useless 0. A plain MOQ/price save
+      // (dozenPrice simply omitted) must NOT touch it either way, or every
+      // onBlur MOQ save would silently wipe out a previously-set dozen
+      // price.
+      if (dozenPrice === 0) update.$unset = { dozenPrice: "" };
+
+      await db.collection("category_moq").updateOne({ category }, update, { upsert: true });
     }
 
     let updatedCount: number | null = null;

@@ -9,9 +9,11 @@ const PAGE_SIZE = 12;
 export default function PreorderBrowser({
   products,
   categoryMoq,
+  categoryDozenPrice,
 }: {
   products: Product[];
   categoryMoq: Record<string, number>;
+  categoryDozenPrice?: Record<string, number>;
 }) {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("All");
@@ -136,6 +138,9 @@ export default function PreorderBrowser({
                 key={product.id}
                 product={product}
                 categoryMoq={product.category ? categoryMoq[product.category] : undefined}
+                categoryDozenPrice={
+                  product.category ? categoryDozenPrice?.[product.category] : undefined
+                }
               />
             ))}
           </div>

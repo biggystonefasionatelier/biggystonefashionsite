@@ -17,7 +17,12 @@ export const PRE_ORDER_CATEGORIES = [
   "Button Covers",
 ] as const;
 
-export type CategoryMoqDoc = { category: string; moq: number; price?: number };
+export type CategoryMoqDoc = {
+  category: string;
+  moq: number;
+  price?: number;
+  dozenPrice?: number;
+};
 
 /**
  * Pre-order minimums are per *category*, not per individual design - a
@@ -30,4 +35,18 @@ export type CategoryMoqDoc = { category: string; moq: number; price?: number };
 export async function getCategoryMoqMap(db: Db): Promise<Map<string, number>> {
   const docs = await db.collection<CategoryMoqDoc>("category_moq").find({}).toArray();
   return new Map(docs.map((d) => [d.category, d.moq]));
+}
+
+/**
+ * Dozen pricing is a per-category bulk discount, same mixing rule as MOQ:
+ * every full 12 pieces across any designs in that category are charged at
+ * this flat total instead of 12x the per-piece price. Leftover pieces
+ * under the next dozen are charged at their normal price.
+ */
+export async function getCategoryDozenPriceMap(db: Db): Promise<Map<string, number>> {
+  const docs = await db
+    .collection<CategoryMoqDoc>("category_moq")
+    .find({ dozenPrice: { $exists: true, $gt: 0 } })
+    .toArray();
+  return new Map(docs.map((d) => [d.category, d.dozenPrice!]));
 }

@@ -7,9 +7,11 @@ import type { Product } from "@/lib/products";
 export default function PreorderProductCard({
   product,
   categoryMoq,
+  categoryDozenPrice,
 }: {
   product: Product;
   categoryMoq?: number;
+  categoryDozenPrice?: number;
 }) {
   const { addItem } = useCart();
   const [added, setAdded] = useState(false);
@@ -54,6 +56,11 @@ export default function PreorderProductCard({
       {!!categoryMoq && (
         <p className="text-xs text-black">
           {product.category} minimum: {categoryMoq} pieces total (mix any designs)
+        </p>
+      )}
+      {!!categoryDozenPrice && (
+        <p className="text-xs text-black">
+          Buy a dozen (12, mix any designs): ₦{categoryDozenPrice.toLocaleString()}
         </p>
       )}
 

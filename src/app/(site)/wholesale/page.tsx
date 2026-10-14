@@ -1,25 +1,33 @@
 import Link from "next/link";
 import { getProducts } from "@/lib/products";
 import { getDb } from "@/lib/mongodb";
-import { getCategoryMoqMap } from "@/lib/categoryMoq";
+import { getCategoryMoqMap, getCategoryDozenPriceMap } from "@/lib/categoryMoq";
 import PreorderBrowser from "@/components/PreorderBrowser";
 
 export const metadata = { title: "Wholesale | Biggystone Fashion Atelier" };
 export const revalidate = 60;
 
-async function safeGetCategoryMoqMap(): Promise<Map<string, number>> {
+async function safeGetCategorySettings(): Promise<{
+  moqMap: Map<string, number>;
+  dozenPriceMap: Map<string, number>;
+}> {
   try {
     const db = await getDb();
-    return await getCategoryMoqMap(db);
+    const [moqMap, dozenPriceMap] = await Promise.all([
+      getCategoryMoqMap(db),
+      getCategoryDozenPriceMap(db),
+    ]);
+    return { moqMap, dozenPriceMap };
   } catch (err) {
-    console.error("getCategoryMoqMap failed (is MongoDB configured yet?):", err);
-    return new Map();
+    console.error("Category settings lookup failed (is MongoDB configured yet?):", err);
+    return { moqMap: new Map(), dozenPriceMap: new Map() };
   }
 }
 
 export default async function WholesalePage() {
   const products = await getProducts("wholesale");
-  const categoryMoqMap = await safeGetCategoryMoqMap();
+  const { moqMap: categoryMoqMap, dozenPriceMap: categoryDozenPriceMap } =
+    await safeGetCategorySettings();
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-12">
@@ -54,7 +62,11 @@ export default async function WholesalePage() {
             </p>
           </div>
           <div className="mt-6">
-            <PreorderBrowser products={products} categoryMoq={Object.fromEntries(categoryMoqMap)} />
+            <PreorderBrowser
+              products={products}
+              categoryMoq={Object.fromEntries(categoryMoqMap)}
+              categoryDozenPrice={Object.fromEntries(categoryDozenPriceMap)}
+            />
           </div>
           <Link
             href="/cart"

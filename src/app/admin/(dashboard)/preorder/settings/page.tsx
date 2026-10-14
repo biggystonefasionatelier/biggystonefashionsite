@@ -2,7 +2,12 @@
 
 import { useEffect, useState } from "react";
 
-type CategorySetting = { category: string; moq: number | null; price: number | null };
+type CategorySetting = {
+  category: string;
+  moq: number | null;
+  price: number | null;
+  dozenPrice: number | null;
+};
 
 export default function PreorderSettingsPage() {
   const [categories, setCategories] = useState<CategorySetting[] | null>(null);
@@ -27,6 +32,18 @@ export default function PreorderSettingsPage() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ category, moq }),
+    });
+    setSaving(null);
+    setSavedAt((prev) => ({ ...prev, [category]: Date.now() }));
+    load();
+  }
+
+  async function saveDozenPrice(category: string, moq: number, dozenPrice: number) {
+    setSaving(category);
+    await fetch("/api/admin/category-moq", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ category, moq, dozenPrice }),
     });
     setSaving(null);
     setSavedAt((prev) => ({ ...prev, [category]: Date.now() }));
@@ -73,6 +90,12 @@ export default function PreorderSettingsPage() {
         price on every existing pre-order piece in that category at once -
         handy when a whole category needs to move to a new price.
       </p>
+      <p className="mt-2 max-w-2xl text-sm text-neutral-600">
+        Dozen price is a bulk discount: once a customer&apos;s cart has 12
+        or more pieces in that category (any designs mixed), every full
+        12 are charged at this flat rate instead of 12x the normal price.
+        Leave it blank for no dozen discount.
+      </p>
 
       {!categories ? (
         <p className="mt-6 text-sm text-neutral-500">Loading...</p>
@@ -116,6 +139,19 @@ export default function PreorderSettingsPage() {
                 >
                   Apply
                 </button>
+                <label className="flex items-center gap-2 text-xs text-neutral-500">
+                  Dozen (12) ₦
+                  <input
+                    type="number"
+                    min={0}
+                    defaultValue={c.dozenPrice ?? ""}
+                    placeholder="—"
+                    onBlur={(e) =>
+                      saveDozenPrice(c.category, c.moq ?? 0, Math.max(0, Number(e.target.value) || 0))
+                    }
+                    className="w-24 rounded-md border border-black/15 px-2 py-1.5 text-sm text-neutral-900"
+                  />
+                </label>
                 <span className="w-32 text-xs text-neutral-500">
                   {saving === c.category
                     ? "Saving..."

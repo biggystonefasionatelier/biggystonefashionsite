@@ -7,11 +7,15 @@ import { useCart } from "@/components/CartContext";
 export default function CartPage() {
   const { items, removeItem, updateQuantity, subtotal } = useCart();
   const [categoryMoq, setCategoryMoq] = useState<Record<string, number>>({});
+  const [categoryDozenPrice, setCategoryDozenPrice] = useState<Record<string, number>>({});
 
   useEffect(() => {
     fetch("/api/category-moq")
       .then((r) => r.json())
-      .then((data) => setCategoryMoq(data.categoryMoq ?? {}));
+      .then((data) => {
+        setCategoryMoq(data.categoryMoq ?? {});
+        setCategoryDozenPrice(data.categoryDozenPrice ?? {});
+      });
   }, []);
 
   if (items.length === 0) {
@@ -60,6 +64,29 @@ export default function CartPage() {
               );
             })}
           </ul>
+
+          {Array.from(wholesaleCategoryTotals.entries()).some(([category]) => categoryDozenPrice[category]) && (
+            <>
+              <p className="mt-3 font-medium">Dozen pricing</p>
+              <ul className="mt-2 space-y-1">
+                {Array.from(wholesaleCategoryTotals.entries())
+                  .filter(([category]) => categoryDozenPrice[category])
+                  .map(([category, total]) => {
+                    const dozenPrice = categoryDozenPrice[category];
+                    const fullDozens = Math.floor(total / 12);
+                    const remainder = total % 12;
+                    return (
+                      <li key={category} className="text-neutral-600">
+                        {category}: {fullDozens > 0
+                          ? `${fullDozens} dozen${fullDozens === 1 ? "" : "s"} at ₦${dozenPrice.toLocaleString()} each applied automatically`
+                          : `add ${12 - remainder} more (any design) to unlock ₦${dozenPrice.toLocaleString()} for 12`}
+                        {fullDozens > 0 && remainder > 0 && ` · ${remainder} more at the regular price`}
+                      </li>
+                    );
+                  })}
+              </ul>
+            </>
+          )}
         </div>
       )}
 
