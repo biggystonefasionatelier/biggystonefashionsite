@@ -16,6 +16,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Biggystone Fashion Atelier",
   description: "Luxury-look jewelry at real prices. Retail and pre-order wholesale.",
+  verification: {
+    google: "jqLgHP_OKZ2O5oowA6JFL5cBpkhbzLExnnEE5h2PtVs",
+  },
 };
 
 export default function RootLayout({
