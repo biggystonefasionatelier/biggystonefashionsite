@@ -1,4 +1,8 @@
-export const metadata = { title: "Contact | Biggystone Fashion Atelier" };
+export const metadata = {
+  title: "Contact | Biggystone Fashion Atelier",
+  description:
+    "Reach Biggystone Fashion Atelier by phone, WhatsApp, email, or Instagram, or visit us at Ajileye Street, Ilaje Road, Bariga, Lagos.",
+};
 
 export default function ContactPage() {
   return (

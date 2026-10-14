@@ -1,4 +1,8 @@
-export const metadata = { title: "Refund & Returns Policy | Biggystone Fashion Atelier" };
+export const metadata = {
+  title: "Refund & Returns Policy | Biggystone Fashion Atelier",
+  description:
+    "What to do if your order arrives damaged or incorrect, and how refunds, replacements, and store credit work for retail and wholesale orders.",
+};
 
 export default function RefundsPage() {
   return (

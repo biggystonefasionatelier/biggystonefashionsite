@@ -4,7 +4,11 @@ import { getDb } from "@/lib/mongodb";
 import { getCategoryMoqMap, getCategoryDozenPriceMap } from "@/lib/categoryMoq";
 import PreorderBrowser from "@/components/PreorderBrowser";
 
-export const metadata = { title: "Wholesale | Biggystone Fashion Atelier" };
+export const metadata = {
+  title: "Wholesale | Biggystone Fashion Atelier",
+  description:
+    "Pre-order wholesale jewelry for resellers — bulk pricing by category, low minimum order quantities, and dozen-rate discounts on select pieces.",
+};
 export const revalidate = 60;
 
 async function safeGetCategorySettings(): Promise<{

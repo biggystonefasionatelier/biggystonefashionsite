@@ -1,6 +1,10 @@
 import Link from "next/link";
 
-export const metadata = { title: "Terms of Service | Biggystone Fashion Atelier" };
+export const metadata = {
+  title: "Terms of Service | Biggystone Fashion Atelier",
+  description:
+    "The terms for using biggystonefashion.com and buying from Biggystone Fashion Atelier, covering both retail and pre-order wholesale orders.",
+};
 
 export default function TermsPage() {
   return (

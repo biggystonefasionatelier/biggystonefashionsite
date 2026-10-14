@@ -1,4 +1,8 @@
-export const metadata = { title: "Privacy Policy | Biggystone Fashion Atelier" };
+export const metadata = {
+  title: "Privacy Policy | Biggystone Fashion Atelier",
+  description:
+    "How Biggystone Fashion Atelier collects, uses, and protects your information when you shop, sign up, or place an order on this site.",
+};
 
 export default function PrivacyPage() {
   return (

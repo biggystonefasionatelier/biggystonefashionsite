@@ -2,7 +2,11 @@ import { getProducts } from "@/lib/products";
 import ShopBrowser from "@/components/ShopBrowser";
 import { BUNDLE_MIN_PRICE, BUNDLE_DISCOUNT_PER_GROUP } from "@/lib/bundleDiscount";
 
-export const metadata = { title: "Shop | Biggystone Fashion Atelier" };
+export const metadata = {
+  title: "Shop | Biggystone Fashion Atelier",
+  description:
+    "Browse in-stock jewelry from ₦1,000 — earrings, necklaces, bracelets and more. Order today for same-day/next-day pickup in Unilag or nationwide delivery.",
+};
 // New/edited products in the admin dashboard should show up without a
 // redeploy - revalidate this page's cached HTML at most once a minute.
 export const revalidate = 60;

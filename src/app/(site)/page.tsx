@@ -5,6 +5,11 @@ import SignupForm from "@/components/SignupForm";
 import { PROMO, isPromoActive, promoDaysRemaining } from "@/lib/promo";
 import { FLASH_SALE, isFlashSaleActive, flashSaleEndLabel } from "@/lib/flashSale";
 
+export const metadata = {
+  title: "Biggystone Fashion Atelier | Affordable Jewelry in Lagos",
+  description:
+    "Luxury-look earrings, necklaces, bracelets and more from ₦1,000. Shop in-stock retail pieces or order wholesale, with pickup and delivery across Lagos and nationwide.",
+};
 export const revalidate = 60;
 
 export default async function HomePage() {

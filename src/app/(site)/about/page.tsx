@@ -1,6 +1,10 @@
 import Link from "next/link";
 
-export const metadata = { title: "About | Biggystone Fashion Atelier" };
+export const metadata = {
+  title: "About | Biggystone Fashion Atelier",
+  description:
+    "Founded in 2019 at AAUA, Biggystone Fashion Atelier is a Lagos-based jewelry brand built on one promise: luxury-look pieces at real, affordable prices.",
+};
 
 export default function AboutPage() {
   return (

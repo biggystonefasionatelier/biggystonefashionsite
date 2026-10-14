@@ -1,7 +1,11 @@
 import { DELIVERY_ZONES } from "@/lib/delivery";
 import { PROMO, isPromoActive } from "@/lib/promo";
 
-export const metadata = { title: "Delivery & Returns | Biggystone Fashion Atelier" };
+export const metadata = {
+  title: "Delivery & Returns | Biggystone Fashion Atelier",
+  description:
+    "Free pickup, same-day/next-day delivery across Lagos, and tracked courier delivery nationwide. See delivery zones, timing, and our returns policy.",
+};
 
 const GROUPS = ["Lagos Mainland", "Lagos Island", "Outside Lagos"] as const;
 
