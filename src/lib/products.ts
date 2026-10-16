@@ -32,6 +32,8 @@ export type ProductDoc = {
   active: boolean;
   created_at: Date;
   colors?: string[] | null;
+  /** MobileNet image fingerprint, used only by the "search by photo" feature - never sent to the client. */
+  embedding?: number[] | null;
 };
 
 export function toProduct(doc: ProductDoc): Product {

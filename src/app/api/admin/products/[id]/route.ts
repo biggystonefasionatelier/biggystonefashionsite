@@ -46,6 +46,7 @@ export async function PATCH(
     if (parsed.data.moq !== undefined) update.moq = parsed.data.moq;
     if (parsed.data.depositPercent !== undefined) update.deposit_percent = parsed.data.depositPercent;
     if (parsed.data.active !== undefined) update.active = parsed.data.active;
+    if (parsed.data.embedding !== undefined) update.embedding = parsed.data.embedding;
 
     const result = await db
       .collection<ProductDoc>("products")

@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import PreorderProductCard from "./PreorderProductCard";
 import type { Product } from "@/lib/products";
+import { computeImageEmbedding } from "@/lib/imageEmbedding";
 
 const PAGE_SIZE = 12;
 
@@ -21,6 +22,45 @@ export default function PreorderBrowser({
   const [maxPrice, setMaxPrice] = useState("");
   const [page, setPage] = useState(1);
   const gridTopRef = useRef<HTMLDivElement>(null);
+
+  const [photoResults, setPhotoResults] = useState<Product[] | null>(null);
+  const [photoSearching, setPhotoSearching] = useState(false);
+  const [photoError, setPhotoError] = useState("");
+
+  async function handlePhotoSearch(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.currentTarget.files?.[0];
+    if (!file) return;
+
+    setPhotoSearching(true);
+    setPhotoError("");
+    try {
+      const embedding = await computeImageEmbedding(file);
+      const res = await fetch("/api/search-by-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ embedding, productType: "wholesale" }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setPhotoError(data.error ?? "Search failed. Try another photo.");
+        return;
+      }
+      if (data.products.length === 0) {
+        setPhotoError("No close matches found for that photo.");
+      }
+      setPhotoResults(data.products);
+    } catch {
+      setPhotoError("Couldn't read that photo. Try a clearer one.");
+    } finally {
+      setPhotoSearching(false);
+      e.currentTarget.value = "";
+    }
+  }
+
+  function clearPhotoSearch() {
+    setPhotoResults(null);
+    setPhotoError("");
+  }
 
   const categories = useMemo(() => {
     const set = new Set<string>();
@@ -112,18 +152,67 @@ export default function PreorderBrowser({
               </button>
             )}
           </div>
-          <input
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search pre-order pieces..."
-            aria-label="Search pre-order pieces"
-            className="w-full rounded-full border border-black/15 px-4 py-2 text-sm sm:w-56"
-          />
+          <div className="flex items-center gap-2">
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search pre-order pieces..."
+              aria-label="Search pre-order pieces"
+              className="w-full rounded-full border border-black/15 px-4 py-2 text-sm sm:w-56"
+            />
+            <label className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-black/15 px-3 py-2 text-xs font-medium text-neutral-600 hover:border-black/30">
+              📷 Search by photo
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={handlePhotoSearch}
+                disabled={photoSearching}
+                className="hidden"
+              />
+            </label>
+          </div>
         </div>
+
+        {photoSearching && (
+          <p className="text-xs text-neutral-500">Looking for pieces that look like that photo...</p>
+        )}
+        {photoError && !photoSearching && (
+          <p className="text-xs text-red-600">{photoError}</p>
+        )}
+        {photoResults !== null && !photoSearching && (
+          <div className="flex items-center justify-between rounded-full bg-brand-gold-light px-4 py-2 text-xs font-medium text-neutral-800">
+            <span>
+              Showing pieces that look like your photo ({photoResults.length} match
+              {photoResults.length === 1 ? "" : "es"})
+            </span>
+            <button type="button" onClick={clearPhotoSearch} className="underline">
+              Clear
+            </button>
+          </div>
+        )}
       </div>
 
-      {filtered.length === 0 ? (
+      {photoResults !== null ? (
+        photoResults.length === 0 ? (
+          <p className="mt-8 text-sm text-neutral-500">
+            No close matches found for that photo - try browsing below instead.
+          </p>
+        ) : (
+          <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+            {photoResults.map((product) => (
+              <PreorderProductCard
+                key={product.id}
+                product={product}
+                categoryMoq={product.category ? categoryMoq[product.category] : undefined}
+                categoryDozenPrice={
+                  product.category ? categoryDozenPrice?.[product.category] : undefined
+                }
+              />
+            ))}
+          </div>
+        )
+      ) : filtered.length === 0 ? (
         <p className="mt-8 text-sm text-neutral-500">No pieces match that search.</p>
       ) : (
         <>

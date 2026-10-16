@@ -58,6 +58,7 @@ export async function POST(request: Request) {
       deposit_percent: parsed.data.depositPercent ?? null,
       active: parsed.data.active,
       created_at: new Date(),
+      embedding: parsed.data.embedding ?? null,
     };
 
     const result = await db.collection<ProductDoc>("products").insertOne(doc as ProductDoc);

@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import type { Product } from "@/lib/products";
+import { computeImageEmbedding } from "@/lib/imageEmbedding";
 
 // Vercel rejects any upload over ~4.5MB at the platform level, before this
 // app's own code (and its friendly error message) ever runs - so that has
@@ -23,6 +24,7 @@ export default function ProductForm({
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [imageUrl, setImageUrl] = useState(product?.image_url ?? "");
+  const [embedding, setEmbedding] = useState<number[] | undefined>(undefined);
   const [productType, setProductType] = useState<"retail" | "wholesale">(
     product?.product_type ?? defaultProductType ?? "retail"
   );
@@ -41,19 +43,33 @@ export default function ProductForm({
 
     setUploading(true);
     setError("");
+    setEmbedding(undefined);
 
     try {
       const body = new FormData();
       body.append("file", file);
-      const res = await fetch("/api/admin/upload", { method: "POST", body });
-      const data = await res.json();
+      // Computed alongside the upload (not blocking on it) so "search by
+      // photo" works for this piece without a separate step later.
+      const [uploadResult, embeddingResult] = await Promise.allSettled([
+        fetch("/api/admin/upload", { method: "POST", body }).then(async (res) => {
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error ?? "Upload failed.");
+          return data.url as string;
+        }),
+        computeImageEmbedding(file),
+      ]);
 
-      if (!res.ok) {
-        setError(data.error ?? "Upload failed.");
+      if (uploadResult.status === "rejected") {
+        setError(uploadResult.reason?.message ?? "Upload failed.");
         return;
       }
 
-      setImageUrl(data.url);
+      setImageUrl(uploadResult.value);
+      if (embeddingResult.status === "fulfilled") {
+        setEmbedding(embeddingResult.value);
+      }
+      // If the embedding step fails, the photo still uploads fine - it just
+      // won't be findable via "search by photo" until re-saved.
     } catch {
       setError("Network error while uploading. Try again.");
     } finally {
@@ -82,6 +98,7 @@ export default function ProductForm({
       stock: Number(form.get("stock") ?? 0),
       imageUrl,
       active: form.get("active") === "on",
+      ...(embedding ? { embedding } : {}),
     };
 
     try {

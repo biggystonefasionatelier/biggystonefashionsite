@@ -11,6 +11,8 @@
     "create-admin": "node scripts/create-admin.mjs"
   },
   "dependencies": {
+    "@tensorflow-models/mobilenet": "^2.1.1",
+    "@tensorflow/tfjs": "^4.22.0",
     "@vercel/blob": "^2.6.1",
     "bcryptjs": "^2.4.3",
     "dotenv": "^16.4.7",

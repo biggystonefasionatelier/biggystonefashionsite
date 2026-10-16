@@ -79,4 +79,5 @@ export const productSchema = z.object({
   moq: z.number().int().min(1).optional(),
   depositPercent: z.number().min(0).max(100).optional(),
   active: z.boolean().default(true),
+  embedding: z.array(z.number()).max(4096).optional(),
 });
