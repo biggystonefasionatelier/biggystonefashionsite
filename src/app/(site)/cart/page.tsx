@@ -170,7 +170,11 @@ export default function CartPage() {
               className="w-16 rounded-md border border-black/15 px-2 py-1 text-sm"
             />
             <button
-              onClick={() => removeItem(item.productId, item.color)}
+              onClick={() => {
+                if (window.confirm(`Remove "${item.name}" from your cart?`)) {
+                  removeItem(item.productId, item.color);
+                }
+              }}
               className="text-xs text-neutral-500 underline"
             >
               Remove
