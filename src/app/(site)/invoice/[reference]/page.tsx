@@ -16,6 +16,10 @@ type InvoiceOrder = {
   delivery_method?: "pickup" | "delivery" | null;
   delivery_zone_label?: string | null;
   delivery_fee?: number | null;
+  bundle_discount_amount?: number | null;
+  dozen_discount_amount?: number | null;
+  discount_amount?: number | null;
+  discount_code?: string | null;
 };
 
 type LoadState = "loading" | "ready" | "not_found" | "error";
@@ -113,6 +117,11 @@ export default function InvoicePage() {
   }
 
   const isWholesale = order.order_type === "wholesale";
+  const itemsSubtotal = order.order_items.reduce((sum, item) => sum + item.unit_price * item.quantity, 0);
+  const hasDiscount =
+    (order.bundle_discount_amount ?? 0) > 0 ||
+    (order.dozen_discount_amount ?? 0) > 0 ||
+    (order.discount_amount ?? 0) > 0;
 
   const opayWhatsappMessage = [
     `Hi Biggystone! I just paid for ${order.customer_name}'s pre-order.`,
@@ -146,11 +155,43 @@ export default function InvoicePage() {
             <span>₦{order.delivery_fee.toLocaleString()}</span>
           </div>
         ) : null}
+
+        {hasDiscount && (
+          <div className="flex items-center justify-between p-3 text-sm text-neutral-600">
+            <span>Subtotal</span>
+            <span>₦{itemsSubtotal.toLocaleString()}</span>
+          </div>
+        )}
+        {(order.dozen_discount_amount ?? 0) > 0 && (
+          <div className="flex items-center justify-between p-3 text-sm text-green-700">
+            <span>🎁 Dozen pricing discount</span>
+            <span>−₦{order.dozen_discount_amount!.toLocaleString()}</span>
+          </div>
+        )}
+        {(order.bundle_discount_amount ?? 0) > 0 && (
+          <div className="flex items-center justify-between p-3 text-sm text-green-700">
+            <span>📦 Bundle discount</span>
+            <span>−₦{order.bundle_discount_amount!.toLocaleString()}</span>
+          </div>
+        )}
+        {(order.discount_amount ?? 0) > 0 && (
+          <div className="flex items-center justify-between p-3 text-sm text-green-700">
+            <span>🏷️ Code {order.discount_code} applied</span>
+            <span>−₦{order.discount_amount!.toLocaleString()}</span>
+          </div>
+        )}
+
         <div className="flex items-center justify-between p-3 text-sm font-bold">
           <span>Total</span>
           <span>₦{order.total.toLocaleString()}</span>
         </div>
       </div>
+      {hasDiscount && (
+        <p className="mt-2 text-xs text-neutral-500">
+          The total above already includes the discount(s) shown - that&apos;s the exact amount to pay, no extra
+          math needed.
+        </p>
+      )}
 
       {isWholesale ? (
         <>

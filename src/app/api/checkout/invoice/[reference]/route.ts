@@ -15,6 +15,10 @@ type OrderDoc = {
   delivery_method?: "pickup" | "delivery" | null;
   delivery_zone_label?: string | null;
   delivery_fee?: number | null;
+  bundle_discount_amount?: number | null;
+  dozen_discount_amount?: number | null;
+  discount_amount?: number | null;
+  discount_code?: string | null;
 };
 
 /**
@@ -43,6 +47,10 @@ export async function GET(
           delivery_method: 1,
           delivery_zone_label: 1,
           delivery_fee: 1,
+          bundle_discount_amount: 1,
+          dozen_discount_amount: 1,
+          discount_amount: 1,
+          discount_code: 1,
         },
       }
     );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useCart } from "@/components/CartContext";
 import { calculateBundleDiscount } from "@/lib/bundleDiscount";
@@ -35,6 +35,14 @@ export default function CheckoutPage() {
   const [preorderResult, setPreorderResult] = useState<PreorderResult | null>(null);
   const [invoiceResult, setInvoiceResult] = useState<InvoiceResult | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [categoryDozenPrice, setCategoryDozenPrice] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    fetch("/api/category-moq")
+      .then((r) => r.json())
+      .then((data) => setCategoryDozenPrice(data.categoryDozenPrice ?? {}))
+      .catch(() => {});
+  }, []);
 
   if (preorderResult) {
     const whatsappMessage = [
@@ -161,6 +169,34 @@ export default function CheckoutPage() {
           items.map((i) => ({ productId: i.productId, price: i.price, quantity: i.quantity }))
         )
       : 0;
+
+  // Mirrors the server-side calculation in src/lib/orderPricing.ts so what
+  // the shopper sees here before submitting matches what they're actually
+  // charged - previously this page had no idea dozen pricing existed, so
+  // the subtotal shown before checkout didn't match the discounted total
+  // that showed up afterward, with nothing explaining the difference.
+  let dozenDiscount = 0;
+  if (orderType === "wholesale") {
+    const categoryTotals = new Map<string, { qty: number; value: number }>();
+    for (const item of items) {
+      const category = item.category || "Uncategorized";
+      const entry = categoryTotals.get(category) ?? { qty: 0, value: 0 };
+      entry.qty += item.quantity;
+      entry.value += item.price * item.quantity;
+      categoryTotals.set(category, entry);
+    }
+    for (const [category, { qty, value }] of categoryTotals) {
+      const dozenPrice = categoryDozenPrice[category];
+      if (!dozenPrice) continue;
+      const fullDozens = Math.floor(qty / 12);
+      if (fullDozens === 0) continue;
+      const avgUnitPrice = value / qty;
+      const saved = avgUnitPrice * 12 * fullDozens - dozenPrice * fullDozens;
+      if (saved > 0) dozenDiscount += Math.round(saved);
+    }
+  }
+
+  const amountDue = subtotal - bundleDiscount - dozenDiscount - (discountPreview.amount || 0);
 
   async function handlePreviewDiscount() {
     const code = discountCode.trim();
@@ -335,10 +371,18 @@ export default function CheckoutPage() {
           📦 Buy-3 bundle discount applied — ₦{bundleDiscount.toLocaleString()} off
         </p>
       )}
+      {dozenDiscount > 0 && (
+        <p className="mt-1 text-sm font-medium text-brand-gold">
+          🎁 Dozen pricing applied — ₦{dozenDiscount.toLocaleString()} off
+        </p>
+      )}
       {discountPreview.status === "applied" && discountPreview.amount > 0 && (
         <p className="mt-1 text-sm font-medium text-green-700">
           − ₦{discountPreview.amount.toLocaleString()} discount ({discountCode})
         </p>
+      )}
+      {(bundleDiscount > 0 || dozenDiscount > 0 || (discountPreview.amount || 0) > 0) && (
+        <p className="mt-2 text-base font-bold">Total to pay: ₦{amountDue.toLocaleString()}</p>
       )}
 
       {orderType === "wholesale" && (
