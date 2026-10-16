@@ -69,15 +69,19 @@ export async function resolveCart(
     .toArray();
   const products = productDocs.map(toProduct);
 
-  if (products.length !== items.length) {
-    const foundIds = new Set(products.map((p) => p.id));
-    const missingCount = items.filter((i) => !foundIds.has(i.productId)).length;
+  // Compare by distinct product ID, not array length - the same product can
+  // legitimately appear as more than one cart line (e.g. two different
+  // colors of the same design), which would make the arrays differ in
+  // length even though every product in the cart is actually available.
+  const foundIds = new Set(products.map((p) => p.id));
+  const missingIds = new Set(items.map((i) => i.productId).filter((id) => !foundIds.has(id)));
+  if (missingIds.size > 0) {
     return {
       ok: false,
       error:
-        missingCount === 1
+        missingIds.size === 1
           ? "One item in your cart is no longer available. Please remove it and try again."
-          : `${missingCount} items in your cart are no longer available. Please remove them and try again.`,
+          : `${missingIds.size} items in your cart are no longer available. Please remove them and try again.`,
     };
   }
 
