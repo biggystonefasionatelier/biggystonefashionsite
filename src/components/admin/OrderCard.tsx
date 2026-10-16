@@ -1,6 +1,7 @@
 "use client";
 
 export type OrderItem = {
+  product_id: string;
   product_name: string;
   quantity: number;
   unit_price: number;
@@ -47,6 +48,45 @@ function deliveryLabel(o: Order): string | null {
   const zone = o.delivery_zone_label ?? "Delivery";
   const fee = o.delivery_fee ? `₦${o.delivery_fee.toLocaleString()}` : "Free";
   return `${zone} (${fee})`;
+}
+
+const CART_STORAGE_KEY = "biggystone_cart_v1";
+
+async function restoreOrderToCart(o: Order) {
+  if (
+    !window.confirm(
+      "This will replace whatever is currently in your cart (on this browser) with this order's items. Continue?"
+    )
+  ) {
+    return;
+  }
+
+  let categoryByProductId: Record<string, string> = {};
+  try {
+    const res = await fetch("/api/admin/products");
+    const data = await res.json();
+    categoryByProductId = Object.fromEntries(
+      (data.products ?? []).map((p: { id: string; category: string | null }) => [p.id, p.category ?? ""])
+    );
+  } catch {
+    // Category lookup is best-effort - the cart still works without it,
+    // it just won't group correctly toward pre-order minimums until the
+    // page is reloaded with product data.
+  }
+
+  const cartItems = o.order_items.map((item) => ({
+    productId: item.product_id,
+    name: item.product_name,
+    price: item.unit_price,
+    quantity: item.quantity,
+    imageUrl: item.image_url ?? undefined,
+    orderType: o.order_type,
+    color: item.color ?? undefined,
+    category: categoryByProductId[item.product_id] || undefined,
+  }));
+
+  window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems));
+  window.open("/cart", "_blank");
 }
 
 export default function OrderCard({
@@ -109,6 +149,15 @@ export default function OrderCard({
               </option>
             ))}
           </select>
+          {o.status === "pending" && (
+            <button
+              type="button"
+              onClick={() => restoreOrderToCart(o)}
+              className="mt-1 block text-xs text-neutral-500 underline"
+            >
+              Load into cart
+            </button>
+          )}
         </div>
       </div>
 
