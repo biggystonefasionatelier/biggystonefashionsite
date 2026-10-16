@@ -70,7 +70,15 @@ export async function resolveCart(
   const products = productDocs.map(toProduct);
 
   if (products.length !== items.length) {
-    return { ok: false, error: "One or more items in your cart are no longer available." };
+    const foundIds = new Set(products.map((p) => p.id));
+    const missingCount = items.filter((i) => !foundIds.has(i.productId)).length;
+    return {
+      ok: false,
+      error:
+        missingCount === 1
+          ? "One item in your cart is no longer available. Please remove it and try again."
+          : `${missingCount} items in your cart are no longer available. Please remove them and try again.`,
+    };
   }
 
   const mismatched = products.find((p) => p.product_type !== orderType);
