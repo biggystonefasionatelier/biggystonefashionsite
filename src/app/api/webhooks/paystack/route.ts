@@ -64,9 +64,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ received: true });
     }
 
+    // Only reject underpayment - see the matching comment in
+    // /api/checkout/verify for why this isn't an exact-equality check.
     const expectedKobo = Math.round(order.total * 100);
-    if (event.data.amount !== expectedKobo) {
-      console.error("Webhook amount mismatch for", reference);
+    if (event.data.amount < expectedKobo) {
+      console.error("Webhook underpayment for", reference);
       return NextResponse.json({ received: true });
     }
 

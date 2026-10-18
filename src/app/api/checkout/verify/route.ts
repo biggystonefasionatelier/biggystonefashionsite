@@ -66,10 +66,14 @@ export async function GET(request: Request) {
       return NextResponse.json({ status: transaction.status, order });
     }
 
-    // Confirm the amount actually paid matches what we expected, in kobo.
+    // Confirm the amount actually paid covers what we expected, in kobo.
+    // Only reject underpayment - Paystack can legitimately charge a little
+    // more than this (its own transaction fee passed to the customer), and
+    // treating that as a mismatch would reject a genuinely successful
+    // payment, leaving the customer debited with an order stuck pending.
     const expectedKobo = Math.round(order.total * 100);
-    if (transaction.amount !== expectedKobo) {
-      console.error("Amount mismatch on verify:", transaction.amount, expectedKobo);
+    if (transaction.amount < expectedKobo) {
+      console.error("Underpayment on verify:", transaction.amount, expectedKobo);
       return NextResponse.json({ error: "Payment amount mismatch" }, { status: 400 });
     }
 
