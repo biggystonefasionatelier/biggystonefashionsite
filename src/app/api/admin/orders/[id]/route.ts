@@ -7,10 +7,13 @@ const updateSchema = z
   .object({
     status: z.enum(["pending", "paid", "failed", "fulfilled", "cancelled"]).optional(),
     sent_to_supplier: z.boolean().optional(),
+    sourced_items: z.array(z.string()).max(2000).optional(),
   })
-  .refine((data) => data.status !== undefined || data.sent_to_supplier !== undefined, {
-    message: "Nothing to update",
-  });
+  .refine(
+    (data) =>
+      data.status !== undefined || data.sent_to_supplier !== undefined || data.sourced_items !== undefined,
+    { message: "Nothing to update" }
+  );
 
 type OrderItemDoc = { product_id: string; quantity: number };
 type OrderDoc = {
@@ -18,6 +21,7 @@ type OrderDoc = {
   order_type: "retail" | "wholesale";
   order_items: OrderItemDoc[];
   sent_to_supplier?: boolean;
+  sourced_items?: string[];
 };
 
 export async function PATCH(
@@ -58,9 +62,10 @@ export async function PATCH(
     }
     const isNewlyPaid = parsed.data.status === "paid" && before.status !== "paid";
 
-    const set: { status?: string; sent_to_supplier?: boolean } = {};
+    const set: { status?: string; sent_to_supplier?: boolean; sourced_items?: string[] } = {};
     if (parsed.data.status !== undefined) set.status = parsed.data.status;
     if (parsed.data.sent_to_supplier !== undefined) set.sent_to_supplier = parsed.data.sent_to_supplier;
+    if (parsed.data.sourced_items !== undefined) set.sourced_items = parsed.data.sourced_items;
 
     const result = await orders.findOneAndUpdate(
       { _id: new ObjectId(id) },

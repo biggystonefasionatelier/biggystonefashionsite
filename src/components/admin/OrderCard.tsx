@@ -19,6 +19,7 @@ export type Order = {
   order_type: "retail" | "wholesale";
   status: string;
   sent_to_supplier?: boolean;
+  sourced_items?: string[];
   payment_method?: "paystack" | "opay" | "paystack_invoice" | null;
   total: number;
   deposit_only: boolean;
@@ -111,12 +112,16 @@ export default function OrderCard({
   order: o,
   onStatusChange,
   categoryByProductId,
+  onToggleSourced,
 }: {
   order: Order;
   onStatusChange: (id: string, status: string) => void;
   categoryByProductId?: Record<string, string>;
+  onToggleSourced?: (orderId: string, itemKey: string) => void;
 }) {
   const summary = o.order_type === "wholesale" ? categorySummary(o, categoryByProductId) : null;
+  const sourced = new Set(o.sourced_items ?? []);
+  const showSourcedCheckboxes = o.order_type === "wholesale" && !!onToggleSourced;
   return (
     <div className="rounded-xl border border-black/10 bg-white p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -160,6 +165,11 @@ export default function OrderCard({
             {totalPieces(o)} piece{totalPieces(o) === 1 ? "" : "s"}
           </p>
           {summary && <p className="max-w-[16rem] text-xs text-neutral-500">{summary}</p>}
+          {showSourcedCheckboxes && (
+            <p className="text-xs text-neutral-500">
+              {sourced.size}/{o.order_items.length} sourced
+            </p>
+          )}
           <select
             value={o.status}
             onChange={(e) => onStatusChange(o.id, e.target.value)}
@@ -184,21 +194,34 @@ export default function OrderCard({
       </div>
 
       <ul className="mt-3 space-y-2 border-t border-black/5 pt-3 text-xs text-neutral-600">
-        {o.order_items.map((item, i) => (
-          <li key={i} className="flex items-center gap-2">
-            <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-md bg-neutral-100">
-              {item.image_url && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={item.image_url} alt="" className="h-full w-full object-cover" />
+        {o.order_items.map((item, i) => {
+          const key = String(i);
+          const isSourced = sourced.has(key);
+          return (
+            <li key={i} className="flex items-center gap-2">
+              {showSourcedCheckboxes && (
+                <input
+                  type="checkbox"
+                  checked={isSourced}
+                  onChange={() => onToggleSourced!(o.id, key)}
+                  aria-label={`Mark "${item.product_name}" as sourced`}
+                  className="h-4 w-4 flex-shrink-0 accent-brand-black"
+                />
               )}
-            </div>
-            <span>
-              {item.quantity} × {item.product_name}
-              {item.color && ` (${item.color})`} — ₦
-              {(item.unit_price * item.quantity).toLocaleString()}
-            </span>
-          </li>
-        ))}
+              <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-md bg-neutral-100">
+                {item.image_url && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={item.image_url} alt="" className="h-full w-full object-cover" />
+                )}
+              </div>
+              <span className={isSourced ? "text-neutral-400 line-through" : undefined}>
+                {item.quantity} × {item.product_name}
+                {item.color && ` (${item.color})`} — ₦
+                {(item.unit_price * item.quantity).toLocaleString()}
+              </span>
+            </li>
+          );
+        })}
       </ul>
 
       {deliveryLabel(o) && (

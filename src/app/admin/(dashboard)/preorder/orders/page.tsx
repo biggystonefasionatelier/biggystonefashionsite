@@ -42,6 +42,27 @@ export default function PreorderOrdersPage() {
     });
   }
 
+  async function toggleSourced(id: string, itemKey: string) {
+    const order = orders?.find((o) => o.id === id);
+    if (!order) return;
+    const current = new Set(order.sourced_items ?? []);
+    if (current.has(itemKey)) {
+      current.delete(itemKey);
+    } else {
+      current.add(itemKey);
+    }
+    const sourced_items = Array.from(current);
+
+    setOrders((prev) =>
+      prev ? prev.map((o) => (o.id === id ? { ...o, sourced_items } : o)) : prev
+    );
+    await fetch(`/api/admin/orders/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sourced_items }),
+    });
+  }
+
   const filtered = orders?.filter((o) => statusFilter === "all" || o.status === statusFilter) ?? null;
 
   return (
@@ -82,6 +103,7 @@ export default function PreorderOrdersPage() {
               order={o}
               onStatusChange={updateStatus}
               categoryByProductId={categoryByProductId}
+              onToggleSourced={toggleSourced}
             />
           ))}
         </div>
