@@ -6,6 +6,7 @@ import OrderCard, { ORDER_STATUSES, type Order } from "@/components/admin/OrderC
 export default function PreorderOrdersPage() {
   const [orders, setOrders] = useState<Order[] | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("paid");
+  const [categoryByProductId, setCategoryByProductId] = useState<Record<string, string>>({});
 
   function load() {
     fetch("/api/admin/orders")
@@ -15,6 +16,19 @@ export default function PreorderOrdersPage() {
 
   useEffect(() => {
     load();
+    // Order items don't carry their own category - only the current product
+    // does - so the per-category piece counts on each order card are looked
+    // up from this once, rather than refetched per card.
+    fetch("/api/admin/products")
+      .then((r) => r.json())
+      .then((data) => {
+        const map: Record<string, string> = {};
+        for (const p of data.products ?? []) {
+          map[p.id] = p.category || "Uncategorized";
+        }
+        setCategoryByProductId(map);
+      })
+      .catch(() => {});
   }, []);
 
   async function updateStatus(id: string, status: string) {
@@ -63,7 +77,12 @@ export default function PreorderOrdersPage() {
       ) : (
         <div className="mt-6 space-y-4">
           {filtered!.map((o) => (
-            <OrderCard key={o.id} order={o} onStatusChange={updateStatus} />
+            <OrderCard
+              key={o.id}
+              order={o}
+              onStatusChange={updateStatus}
+              categoryByProductId={categoryByProductId}
+            />
           ))}
         </div>
       )}

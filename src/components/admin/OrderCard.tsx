@@ -50,6 +50,24 @@ function deliveryLabel(o: Order): string | null {
   return `${zone} (${fee})`;
 }
 
+// e.g. "57 Brooches · 19 Earrings" - lets Faith count what to source/pack
+// per category at a glance instead of tallying every line item by hand.
+// Category isn't stored on the order itself (only on the product), so this
+// depends on the current product list passed in from the orders page.
+function categorySummary(o: Order, categoryByProductId?: Record<string, string>): string | null {
+  if (!categoryByProductId) return null;
+  const totals = new Map<string, number>();
+  for (const item of o.order_items) {
+    const category = categoryByProductId[item.product_id] || "Uncategorized";
+    totals.set(category, (totals.get(category) ?? 0) + item.quantity);
+  }
+  if (totals.size === 0) return null;
+  return Array.from(totals.entries())
+    .sort((a, b) => b[1] - a[1])
+    .map(([category, qty]) => `${qty} ${category}`)
+    .join(" · ");
+}
+
 const CART_STORAGE_KEY = "biggystone_cart_v1";
 
 async function restoreOrderToCart(o: Order) {
@@ -92,10 +110,13 @@ async function restoreOrderToCart(o: Order) {
 export default function OrderCard({
   order: o,
   onStatusChange,
+  categoryByProductId,
 }: {
   order: Order;
   onStatusChange: (id: string, status: string) => void;
+  categoryByProductId?: Record<string, string>;
 }) {
+  const summary = o.order_type === "wholesale" ? categorySummary(o, categoryByProductId) : null;
   return (
     <div className="rounded-xl border border-black/10 bg-white p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -138,6 +159,7 @@ export default function OrderCard({
           <p className="text-xs font-medium text-neutral-700">
             {totalPieces(o)} piece{totalPieces(o) === 1 ? "" : "s"}
           </p>
+          {summary && <p className="max-w-[16rem] text-xs text-neutral-500">{summary}</p>}
           <select
             value={o.status}
             onChange={(e) => onStatusChange(o.id, e.target.value)}
