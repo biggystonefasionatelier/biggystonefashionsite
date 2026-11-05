@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { allDeliveryAreas, findDeliveryZone } from "@/lib/delivery";
+import { allDeliveryAreas, findDeliveryZone, statesOutsideLagos } from "@/lib/delivery";
 
 const WHATSAPP_NUMBER = "2348148263705";
 
@@ -24,6 +24,7 @@ export default function DeliveryAreaPicker({
   const [open, setOpen] = useState(false);
 
   const allAreas = useMemo(() => allDeliveryAreas(), []);
+  const outsideLagosStates = useMemo(() => statesOutsideLagos(), []);
   const selectedZone = findDeliveryZone(zoneId);
 
   const matches =
@@ -49,7 +50,7 @@ export default function DeliveryAreaPicker({
         }}
         onFocus={() => setOpen(true)}
         onBlur={() => setTimeout(() => setOpen(false), 150)}
-        placeholder="Type your area - e.g. Yaba, Lekki, Ikeja..."
+        placeholder="In Lagos? Type your area - e.g. Yaba, Lekki, Ikeja..."
         className="w-full rounded-md border border-black/15 px-3 py-2 text-sm"
       />
 
@@ -84,6 +85,31 @@ export default function DeliveryAreaPicker({
           )}
         </div>
       )}
+
+      <div className="mt-2">
+        <label className="block text-xs text-neutral-500" htmlFor="delivery-state-outside-lagos">
+          Outside Lagos? Select your state
+        </label>
+        <select
+          id="delivery-state-outside-lagos"
+          value={outsideLagosStates.some((s) => s.zone.id === zoneId) ? zoneId : ""}
+          onChange={(e) => {
+            const picked = outsideLagosStates.find((s) => s.zone.id === e.target.value);
+            if (picked) {
+              setQuery(picked.area);
+              onSelect(picked.zone.id);
+            }
+          }}
+          className="mt-1 w-full rounded-md border border-black/15 px-3 py-2 text-sm"
+        >
+          <option value="">Select a state...</option>
+          {outsideLagosStates.map((s) => (
+            <option key={s.zone.id} value={s.zone.id}>
+              {s.area} — ₦{s.zone.fee.toLocaleString()}
+            </option>
+          ))}
+        </select>
+      </div>
 
       {selectedZone && (
         <p className="mt-1 text-xs text-neutral-500">

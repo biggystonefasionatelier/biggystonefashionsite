@@ -158,6 +158,21 @@ export function allDeliveryAreas(): DeliveryAreaOption[] {
 }
 
 /**
+ * Every state (plus FCT) outside Lagos, alphabetical, one per zone's area
+ * entry. Search-by-typing works for Lagos because there are dozens of named
+ * sub-areas people actually search by, but outside Lagos the list is only
+ * ever a state name - and most people search by the city they live in
+ * ("Port Harcourt", "Ibadan"), not the state it's in ("Rivers", "Oyo"), so
+ * nothing ever matched. A plain pick-your-state list sidesteps that - every
+ * state is just directly there, nothing to guess or mistype.
+ */
+export function statesOutsideLagos(): DeliveryAreaOption[] {
+  return DELIVERY_ZONES.filter((zone) => zone.group === "Outside Lagos")
+    .flatMap((zone) => zone.areas.map((area) => ({ area, zone })))
+    .sort((a, b) => a.area.localeCompare(b.area));
+}
+
+/**
  * Pickup is always free. Delivery is priced by zone (see DELIVERY_ZONES).
  * No standing Friday promo anymore - the only current free-delivery rule
  * is the September launch promo (orders ≥ PROMO.freeDeliveryThreshold),
