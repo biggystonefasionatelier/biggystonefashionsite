@@ -92,9 +92,9 @@ export default function DeliveryAreaPicker({
         </label>
         <select
           id="delivery-state-outside-lagos"
-          value={outsideLagosStates.some((s) => s.zone.id === zoneId) ? zoneId : ""}
+          value={outsideLagosStates.some((s) => s.area === query) ? query : ""}
           onChange={(e) => {
-            const picked = outsideLagosStates.find((s) => s.zone.id === e.target.value);
+            const picked = outsideLagosStates.find((s) => s.area === e.target.value);
             if (picked) {
               setQuery(picked.area);
               onSelect(picked.zone.id);
@@ -104,7 +104,7 @@ export default function DeliveryAreaPicker({
         >
           <option value="">Select a state...</option>
           {outsideLagosStates.map((s) => (
-            <option key={s.zone.id} value={s.zone.id}>
+            <option key={s.area} value={s.area}>
               {s.area} — ₦{s.zone.fee.toLocaleString()}
             </option>
           ))}
