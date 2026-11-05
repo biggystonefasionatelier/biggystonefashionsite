@@ -14,7 +14,7 @@ export const DELIVERY_ZONES: DeliveryZone[] = [
     id: "mainland-1",
     group: "Lagos Mainland",
     label: "Mainland 1",
-    areas: ["Surulere", "Yaba", "Ebute-Metta", "Fadeyi", "Ojuelegba", "Oyingbo", "Ilupeju"],
+    areas: ["Surulere", "Yaba", "Ebute-Metta", "Fadeyi", "Ojuelegba", "Oyingbo", "Ilupeju", "Bariga", "Iwaya"],
     fee: 2000,
     eta: "1-2 business days",
   },
