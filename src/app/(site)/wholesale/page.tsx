@@ -3,6 +3,7 @@ import { getProducts } from "@/lib/products";
 import { getDb } from "@/lib/mongodb";
 import { getCategoryMoqMap, getCategoryDozenPriceMap } from "@/lib/categoryMoq";
 import PreorderBrowser from "@/components/PreorderBrowser";
+import WholesaleGate from "@/components/WholesaleGate";
 
 export const metadata = {
   title: "Wholesale | Biggystone Fashion Atelier",
@@ -34,6 +35,7 @@ export default async function WholesalePage() {
     await safeGetCategorySettings();
 
   return (
+    <WholesaleGate>
     <div className="mx-auto max-w-6xl px-4 py-12">
       <h1 className="text-2xl font-bold">Wholesale</h1>
 
@@ -81,5 +83,6 @@ export default async function WholesalePage() {
         </>
       )}
     </div>
+    </WholesaleGate>
   );
 }
