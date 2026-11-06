@@ -361,6 +361,59 @@ export async function sendGiftVoucherEmail(params: {
   );
 }
 
+/**
+ * Creates and immediately sends a Brevo email campaign to the signup list -
+ * shared by the admin broadcast route (send now) and the scheduled-
+ * broadcast cron job (send later), so there's one place that knows how to
+ * actually fire a campaign off.
+ */
+export async function sendBroadcastCampaign(params: {
+  subject: string;
+  htmlContent: string;
+}): Promise<{ ok: boolean; campaignId?: number; error?: string }> {
+  const apiKey = process.env.BREVO_API_KEY;
+  const listId = process.env.BREVO_LIST_ID;
+  const senderEmail = process.env.ADMIN_NOTIFICATION_EMAIL;
+
+  if (!apiKey || !listId || !senderEmail) {
+    return { ok: false, error: "Brevo is not fully configured" };
+  }
+
+  const createRes = await fetch("https://api.brevo.com/v3/emailCampaigns", {
+    method: "POST",
+    headers: { "api-key": apiKey, "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({
+      name: `Broadcast ${new Date().toISOString()}`,
+      subject: params.subject,
+      sender: { name: "Biggystone Fashion Atelier", email: senderEmail },
+      htmlContent: params.htmlContent,
+      recipients: { listIds: [Number(listId)] },
+    }),
+  });
+
+  if (!createRes.ok) {
+    const text = await createRes.text();
+    console.error("Brevo campaign create failed:", createRes.status, text);
+    return { ok: false, error: "Failed to create campaign" };
+  }
+
+  const created = await createRes.json();
+  const campaignId = created.id;
+
+  const sendRes = await fetch(`https://api.brevo.com/v3/emailCampaigns/${campaignId}/sendNow`, {
+    method: "POST",
+    headers: { "api-key": apiKey, Accept: "application/json" },
+  });
+
+  if (!sendRes.ok) {
+    const text = await sendRes.text();
+    console.error("Brevo campaign send failed:", sendRes.status, text);
+    return { ok: false, campaignId, error: "Campaign created but failed to send" };
+  }
+
+  return { ok: true, campaignId };
+}
+
 export async function notifyOrderPaid(order: {
   customer_name: string;
   email: string;

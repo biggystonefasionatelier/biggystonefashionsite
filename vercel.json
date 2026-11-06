@@ -15,6 +15,10 @@
     {
       "path": "/api/cron/revert-flash-sale",
       "schedule": "59 22 * * *"
+    },
+    {
+      "path": "/api/cron/send-scheduled-broadcasts",
+      "schedule": "30 8 * * *"
     }
   ]
 }
