@@ -7,6 +7,7 @@ import { BIRTHDAY_DISCOUNT_CODE, markBirthdayDiscountUsed } from "@/lib/discount
 import { markGiftVoucherUsed } from "@/lib/giftVoucher";
 import { markReferralCreditsUsed } from "@/lib/referral";
 import { markBrevoBirthdayDiscountUsed, notifyOrderPaid } from "@/lib/brevo";
+import { sendPurchaseConversionEvent } from "@/lib/metaConversions";
 
 type OrderItemDoc = { product_id: string; product_name: string; quantity: number; unit_price: number };
 type OrderDoc = {
@@ -101,6 +102,12 @@ export async function GET(request: Request) {
     }
 
     await notifyOrderPaid(order);
+    await sendPurchaseConversionEvent({
+      email: order.email,
+      phone: order.phone,
+      total: order.total,
+      eventId: order.paystack_reference,
+    });
 
     const updatedOrder = await orders.findOne({ _id: order._id });
 

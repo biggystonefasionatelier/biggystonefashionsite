@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 import { z } from "zod";
 import { getDb } from "@/lib/mongodb";
+import { sendPurchaseConversionEvent } from "@/lib/metaConversions";
 
 const updateSchema = z
   .object({
@@ -22,6 +23,10 @@ type OrderDoc = {
   order_items: OrderItemDoc[];
   sent_to_supplier?: boolean;
   sourced_items?: string[];
+  email: string;
+  phone: string;
+  total: number;
+  paystack_reference?: string;
 };
 
 export async function PATCH(
@@ -84,6 +89,20 @@ export async function PATCH(
           { $set: { stock: { $max: [{ $subtract: ["$stock", item.quantity] }, 0] } } },
         ]);
       }
+    }
+
+    // Fires the same server-side Purchase event the automatic Paystack
+    // paths do (see /api/checkout/verify and /api/webhooks/paystack) - a
+    // manual reconciliation like this is a real sale too, and it never
+    // touches the customer's browser, so the pixel-only tracking would
+    // otherwise miss it entirely.
+    if (isNewlyPaid) {
+      await sendPurchaseConversionEvent({
+        email: before.email,
+        phone: before.phone,
+        total: before.total,
+        eventId: before.paystack_reference ?? id,
+      });
     }
 
     const { _id, ...rest } = result;

@@ -11,8 +11,11 @@ declare global {
  * this is used on the checkout success page, so refreshing that page
  * doesn't double-count the same purchase.
  */
-export function trackPurchase(value: number, currency = "NGN"): void {
+export function trackPurchase(value: number, eventId: string, currency = "NGN"): void {
   if (typeof window !== "undefined" && window.fbq) {
-    window.fbq("track", "Purchase", { value, currency });
+    // eventID lets Meta dedupe this against the matching server-side
+    // Conversions API call (src/lib/metaConversions.ts) for the same
+    // order, instead of counting the one sale twice.
+    window.fbq("track", "Purchase", { value, currency }, { eventID: eventId });
   }
 }

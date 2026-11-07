@@ -31,7 +31,7 @@ function SuccessContent() {
           // pixel shouldn't fire twice for one purchase).
           const trackedKey = `biggystone_purchase_tracked_${reference}`;
           if (data.order?.total && !sessionStorage.getItem(trackedKey)) {
-            trackPurchase(data.order.total);
+            trackPurchase(data.order.total, reference);
             sessionStorage.setItem(trackedKey, "1");
           }
 
