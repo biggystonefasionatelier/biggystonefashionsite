@@ -4,6 +4,7 @@ import { initializeTransaction } from "@/lib/paystack";
 
 type OrderItemDoc = { product_name: string; quantity: number; unit_price: number; image_url?: string | null };
 type OrderDoc = {
+  order_number?: number;
   customer_name: string;
   email: string;
   status: string;
@@ -38,6 +39,7 @@ export async function GET(
       { paystack_reference: reference, payment_method: { $in: ["paystack_invoice", "opay"] } },
       {
         projection: {
+          order_number: 1,
           customer_name: 1,
           status: 1,
           total: 1,

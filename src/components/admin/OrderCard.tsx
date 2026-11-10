@@ -11,6 +11,7 @@ export type OrderItem = {
 
 export type Order = {
   id: string;
+  order_number?: number;
   customer_name: string;
   email: string;
   phone: string;
@@ -128,6 +129,7 @@ export default function OrderCard({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <p className="font-medium">
+            {o.order_number && <span className="text-neutral-500">#{o.order_number} · </span>}
             {o.customer_name} · <span className="capitalize">{o.order_type}</span>
             {o.deposit_only && " (deposit)"}
             {o.payment_method === "opay" && (

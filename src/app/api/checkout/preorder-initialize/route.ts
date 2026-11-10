@@ -4,6 +4,7 @@ import { checkoutInitSchema } from "@/lib/validation";
 import { getDb } from "@/lib/mongodb";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { resolveCart } from "@/lib/orderPricing";
+import { getNextOrderNumber } from "@/lib/orderNumber";
 
 /**
  * Pre-order wholesale pieces are paid manually to Faith's Opay account
@@ -66,8 +67,10 @@ export async function POST(request: Request) {
     // has a unique index with no sparse option (see database/init-indexes.mjs),
     // so every order still needs a unique value in that field.
     const reference = `biggystone_opay_${randomUUID()}`;
+    const orderNumber = await getNextOrderNumber(db);
 
     const insertResult = await db.collection("orders").insertOne({
+      order_number: orderNumber,
       customer_name: customerName,
       email,
       phone,

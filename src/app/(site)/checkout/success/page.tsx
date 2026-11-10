@@ -8,7 +8,7 @@ import { trackPurchase } from "@/lib/analytics";
 
 type VerifyState = "checking" | "paid" | "failed" | "error";
 
-type GiftInfo = { name: string; code: string | null; orderNumber: number | null };
+type GiftInfo = { name: string; code: string | null; qualifyingOrderNumber: number | null };
 
 function SuccessContent() {
   const params = useSearchParams();
@@ -16,6 +16,7 @@ function SuccessContent() {
   const { clear } = useCart();
   const [state, setState] = useState<VerifyState>(reference ? "checking" : "error");
   const [gift, setGift] = useState<GiftInfo | null>(null);
+  const [orderNumber, setOrderNumber] = useState<number | null>(null);
 
   useEffect(() => {
     if (!reference) return;
@@ -25,6 +26,7 @@ function SuccessContent() {
       .then((data) => {
         if (data.status === "paid") {
           setState("paid");
+          setOrderNumber(data.order?.order_number ?? null);
           clear();
 
           // Guard against double-counting the same order if this page is
@@ -40,7 +42,7 @@ function SuccessContent() {
             setGift({
               name: data.order.gift_name,
               code: data.order.gift_voucher_code ?? null,
-              orderNumber: data.order.gift_order_number ?? null,
+              qualifyingOrderNumber: data.order.gift_order_number ?? null,
             });
           }
         } else {
@@ -58,6 +60,7 @@ function SuccessContent() {
       {state === "paid" && (
         <>
           <h1 className="text-2xl font-bold">Thank you — your order is confirmed</h1>
+          {orderNumber && <p className="mt-1 text-xs text-neutral-500">Order #{orderNumber}</p>}
           <p className="mt-3 text-sm text-neutral-600">
             A confirmation has been sent to your email. We&apos;ll reach out
             with delivery details shortly.
@@ -65,7 +68,9 @@ function SuccessContent() {
           {gift && (
             <div className="mt-6 rounded-xl border border-brand-gold/60 bg-brand-gold/10 p-5 text-left">
               <p className="text-sm font-bold">
-                🎉 {gift.orderNumber ? `Your ${gift.orderNumber}th qualifying order` : "Loyalty milestone"}{" "}
+                🎉 {gift.qualifyingOrderNumber
+                  ? `Your ${gift.qualifyingOrderNumber}th qualifying order`
+                  : "Loyalty milestone"}{" "}
                 earned you a gift!
               </p>
               <p className="mt-1 text-sm">{gift.name}</p>

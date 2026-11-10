@@ -7,6 +7,7 @@ import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { resolveCart, resolveDiscountCode } from "@/lib/orderPricing";
 import { calculateDeliveryFee, findDeliveryZone, type DeliveryMethod } from "@/lib/delivery";
 import { PROMO, isPromoActive } from "@/lib/promo";
+import { getNextOrderNumber } from "@/lib/orderNumber";
 
 export async function POST(request: Request) {
   const ip = getClientIp(request);
@@ -115,8 +116,10 @@ export async function POST(request: Request) {
     }
 
     const reference = `biggystone_${randomUUID()}`;
+    const orderNumber = await getNextOrderNumber(db);
 
     const insertResult = await db.collection("orders").insertOne({
+      order_number: orderNumber,
       customer_name: customerName,
       email,
       phone,

@@ -6,6 +6,7 @@ import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { resolveCart, resolveDiscountCode } from "@/lib/orderPricing";
 import { calculateDeliveryFee, findDeliveryZone, type DeliveryMethod } from "@/lib/delivery";
 import { PROMO, isPromoActive } from "@/lib/promo";
+import { getNextOrderNumber } from "@/lib/orderNumber";
 
 /**
  * "Pay for me" - a customer picks items and fills in delivery details but
@@ -119,8 +120,10 @@ export async function POST(request: Request) {
     // Still needs a unique value for the unique, non-sparse
     // paystack_reference index, even though Paystack isn't called yet.
     const reference = `biggystone_invoice_${randomUUID()}`;
+    const orderNumber = await getNextOrderNumber(db);
 
     const insertResult = await db.collection("orders").insertOne({
+      order_number: orderNumber,
       customer_name: customerName,
       email,
       phone,
