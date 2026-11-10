@@ -10,8 +10,11 @@ export type GiftVoucherDoc = {
   email: string;
   type: VoucherType;
   amount: number | null;
-  gift_number: number;
-  source_order_id: ObjectId;
+  // null for a voucher the admin issued directly (not earned through the
+  // loyalty program) - e.g. a one-off goodwill discount.
+  gift_number: number | null;
+  source_order_id: ObjectId | null;
+  note?: string | null;
   created_at: Date;
   used: boolean;
   used_at: Date | null;
@@ -42,9 +45,10 @@ export async function createGiftVoucher(
     email: string;
     type: VoucherType;
     amount: number | null;
-    giftNumber: number;
-    sourceOrderId: ObjectId;
+    giftNumber?: number | null;
+    sourceOrderId?: ObjectId | null;
     transferable?: boolean;
+    note?: string | null;
   }
 ): Promise<string> {
   const code = generateVoucherCode();
@@ -53,8 +57,9 @@ export async function createGiftVoucher(
     email: params.email.trim().toLowerCase(),
     type: params.type,
     amount: params.amount,
-    gift_number: params.giftNumber,
-    source_order_id: params.sourceOrderId,
+    gift_number: params.giftNumber ?? null,
+    source_order_id: params.sourceOrderId ?? null,
+    note: params.note ?? null,
     created_at: new Date(),
     used: false,
     used_at: null,
