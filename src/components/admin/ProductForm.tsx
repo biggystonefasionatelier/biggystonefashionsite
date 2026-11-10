@@ -28,6 +28,10 @@ export default function ProductForm({
   const [productType, setProductType] = useState<"retail" | "wholesale">(
     product?.product_type ?? defaultProductType ?? "retail"
   );
+  const [duplicateMatch, setDuplicateMatch] = useState<{
+    name: string;
+    imageUrl: string | null;
+  } | null>(null);
 
   async function handleFileChange(e: FormEvent<HTMLInputElement>) {
     const file = e.currentTarget.files?.[0];
@@ -44,6 +48,7 @@ export default function ProductForm({
     setUploading(true);
     setError("");
     setEmbedding(undefined);
+    setDuplicateMatch(null);
 
     try {
       const body = new FormData();
@@ -67,6 +72,26 @@ export default function ProductForm({
       setImageUrl(uploadResult.value);
       if (embeddingResult.status === "fulfilled") {
         setEmbedding(embeddingResult.value);
+
+        // Best-effort duplicate check - a failure here shouldn't block the
+        // upload, it's just a heads-up.
+        try {
+          const dupRes = await fetch("/api/admin/check-duplicate-photo", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              embedding: embeddingResult.value,
+              productType,
+              excludeProductId: product?.id,
+            }),
+          });
+          const dupData = await dupRes.json();
+          if (dupRes.ok && dupData.duplicate) {
+            setDuplicateMatch({ name: dupData.match.name, imageUrl: dupData.match.imageUrl });
+          }
+        } catch {
+          // Ignore - advisory only.
+        }
       }
       // If the embedding step fails, the photo still uploads fine - it just
       // won't be findable via "search by photo" until re-saved.
@@ -252,6 +277,31 @@ export default function ProductForm({
           className="mt-2 block text-sm"
         />
         {uploading && <p className="mt-1 text-xs text-neutral-500">Uploading...</p>}
+        {duplicateMatch && (
+          <div className="mt-2 flex items-center gap-3 rounded-md border border-amber-400 bg-amber-50 p-2">
+            {duplicateMatch.imageUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={duplicateMatch.imageUrl}
+                alt=""
+                className="h-10 w-10 flex-shrink-0 rounded object-cover"
+              />
+            )}
+            <div className="flex-1">
+              <p className="text-xs text-amber-900">
+                ⚠️ This looks like the same photo as <strong>&quot;{duplicateMatch.name}&quot;</strong>,
+                already in this catalog. If that&apos;s a different piece, you can ignore this.
+              </p>
+              <button
+                type="button"
+                onClick={() => setDuplicateMatch(null)}
+                className="mt-1 text-xs text-amber-900 underline"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        )}
         <input
           value={imageUrl}
           onChange={(e) => setImageUrl(e.target.value)}
