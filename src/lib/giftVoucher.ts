@@ -16,6 +16,11 @@ export type GiftVoucherDoc = {
   used: boolean;
   used_at: Date | null;
   used_order_id: ObjectId | null;
+  // When true, anyone with the code can redeem it - not just the email
+  // that won it (e.g. a gift card meant to be shared with a friend).
+  // Defaults to false (old vouchers, and most gifts) for the original
+  // winner-only behavior.
+  transferable?: boolean;
 };
 
 // Distinct "GIFT-" prefix so it's never confused with PROMO/birthday codes
@@ -39,6 +44,7 @@ export async function createGiftVoucher(
     amount: number | null;
     giftNumber: number;
     sourceOrderId: ObjectId;
+    transferable?: boolean;
   }
 ): Promise<string> {
   const code = generateVoucherCode();
@@ -53,6 +59,7 @@ export async function createGiftVoucher(
     used: false,
     used_at: null,
     used_order_id: null,
+    transferable: params.transferable ?? false,
   });
   return code;
 }
@@ -72,7 +79,7 @@ export async function checkGiftVoucherEligibility(
 
   if (!voucher) return { eligible: false, reason: "not_found" };
   if (voucher.used) return { eligible: false, reason: "already_used" };
-  if (voucher.email !== email.trim().toLowerCase()) {
+  if (!voucher.transferable && voucher.email !== email.trim().toLowerCase()) {
     return { eligible: false, reason: "wrong_email" };
   }
 

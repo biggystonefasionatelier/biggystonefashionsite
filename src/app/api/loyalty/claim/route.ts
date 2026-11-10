@@ -50,6 +50,7 @@ export async function POST(request: Request) {
       description: string;
       voucher_type?: VoucherType | "none";
       voucher_amount?: number | null;
+      voucher_transferable?: boolean;
     }>("gifts").findOne({ number: giftNumber });
     if (!gift) {
       return NextResponse.json({ error: "That gift number doesn't exist" }, { status: 400 });
@@ -76,6 +77,7 @@ export async function POST(request: Request) {
         amount: gift.voucher_type === "fixed_discount" ? gift.voucher_amount ?? null : null,
         giftNumber,
         sourceOrderId: result._id,
+        transferable: gift.voucher_transferable ?? false,
       });
 
       await sendGiftVoucherEmail({
@@ -85,12 +87,14 @@ export async function POST(request: Request) {
         giftName: gift.name,
         type: gift.voucher_type,
         amount: gift.voucher_amount ?? null,
+        transferable: gift.voucher_transferable ?? false,
       });
     }
 
     return NextResponse.json({
       gift: { number: gift.number, name: gift.name, description: gift.description },
       voucherCode,
+      transferable: gift.voucher_transferable ?? false,
     });
   } catch (err) {
     console.error("Gift claim failed:", err);

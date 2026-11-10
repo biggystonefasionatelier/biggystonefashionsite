@@ -343,11 +343,15 @@ export async function sendGiftVoucherEmail(params: {
   giftName: string;
   type: "fixed_discount" | "free_delivery";
   amount: number | null;
+  transferable?: boolean;
 }): Promise<void> {
   const rewardLine =
     params.type === "fixed_discount"
       ? `₦${(params.amount ?? 0).toLocaleString()} off your next order`
       : "free delivery on your next order";
+  const shareLine = params.transferable
+    ? "<p>This one is shareable - use it yourself, or pass it on to a friend to use on their own order.</p>"
+    : "";
 
   await sendCustomerEmail(
     params.email,
@@ -357,6 +361,7 @@ export async function sendGiftVoucherEmail(params: {
      that's ${rewardLine}.</p>
      <p>Your one-time code: <strong style="font-size:18px;letter-spacing:1px;">${params.code}</strong></p>
      <p>Enter this code at checkout (discount code field) whenever you're ready to use it.</p>
+     ${shareLine}
      <p>With love,<br>Faith, Founder — Biggystone Fashion Atelier</p>`
   );
 }

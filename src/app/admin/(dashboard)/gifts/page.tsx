@@ -12,6 +12,7 @@ type Gift = {
   image_url: string | null;
   voucher_type?: VoucherType;
   voucher_amount?: number | null;
+  voucher_transferable?: boolean;
 };
 
 function GiftRow({ gift, onSaved }: { gift: Gift; onSaved: (gift: Gift) => void }) {
@@ -20,6 +21,7 @@ function GiftRow({ gift, onSaved }: { gift: Gift; onSaved: (gift: Gift) => void 
   const [imageUrl, setImageUrl] = useState(gift.image_url ?? "");
   const [voucherType, setVoucherType] = useState<VoucherType>(gift.voucher_type ?? "none");
   const [voucherAmount, setVoucherAmount] = useState(gift.voucher_amount?.toString() ?? "");
+  const [voucherTransferable, setVoucherTransferable] = useState(gift.voucher_transferable ?? false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -37,6 +39,7 @@ function GiftRow({ gift, onSaved }: { gift: Gift; onSaved: (gift: Gift) => void 
           imageUrl,
           voucherType,
           voucherAmount: voucherAmount ? Number(voucherAmount) : undefined,
+          voucherTransferable,
         }),
       });
       const data = await res.json();
@@ -115,11 +118,22 @@ function GiftRow({ gift, onSaved }: { gift: Gift; onSaved: (gift: Gift) => void 
         )}
       </div>
       {voucherType !== "none" && (
-        <p className="mt-2 text-xs text-neutral-500">
-          The customer gets a one-time code right after they pick this
-          number (shown on screen and emailed to them), for use at checkout
-          on a future order. This order itself isn&apos;t affected.
-        </p>
+        <>
+          <p className="mt-2 text-xs text-neutral-500">
+            The customer gets a one-time code right after they pick this
+            number (shown on screen and emailed to them), for use at checkout
+            on a future order. This order itself isn&apos;t affected.
+          </p>
+          <label className="mt-2 flex items-center gap-2 text-xs text-neutral-600">
+            <input
+              type="checkbox"
+              checked={voucherTransferable}
+              onChange={(e) => setVoucherTransferable(e.target.checked)}
+            />
+            Shareable — anyone with the code can use it, not just the winner
+            (e.g. a gift card meant to be given to a friend)
+          </label>
+        </>
       )}
 
       <div className="mt-3 flex items-center gap-3">

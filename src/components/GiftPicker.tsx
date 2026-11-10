@@ -11,6 +11,7 @@ export default function GiftPicker({ reference }: { reference: string }) {
     null
   );
   const [voucherCode, setVoucherCode] = useState<string | null>(null);
+  const [transferable, setTransferable] = useState(false);
 
   async function pick(number: number) {
     setPicking(true);
@@ -32,6 +33,7 @@ export default function GiftPicker({ reference }: { reference: string }) {
 
       setGift(data.gift);
       setVoucherCode(data.voucherCode ?? null);
+      setTransferable(!!data.transferable);
     } catch {
       setError("Network error. Please try again.");
       setPicking(false);
@@ -57,6 +59,11 @@ export default function GiftPicker({ reference }: { reference: string }) {
                 <p className="mt-1 text-xs text-neutral-500">
                   We&apos;ve also emailed this to you so it isn&apos;t lost.
                 </p>
+                {transferable && (
+                  <p className="mt-1 text-xs text-neutral-500">
+                    This one&apos;s shareable — use it yourself, or pass it on to a friend.
+                  </p>
+                )}
               </div>
             ) : (
               <p className="mt-4 text-xs text-neutral-500">
