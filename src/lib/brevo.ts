@@ -344,6 +344,7 @@ export async function sendGiftVoucherEmail(params: {
   type: "fixed_discount" | "free_delivery";
   amount: number | null;
   transferable?: boolean;
+  orderNumber?: number;
 }): Promise<void> {
   const rewardLine =
     params.type === "fixed_discount"
@@ -352,12 +353,15 @@ export async function sendGiftVoucherEmail(params: {
   const shareLine = params.transferable
     ? "<p>This one is shareable - use it yourself, or pass it on to a friend to use on their own order.</p>"
     : "";
+  const milestoneLine = params.orderNumber
+    ? `This was your <strong>${params.orderNumber}th qualifying order</strong> with us - thank you for being a loyal customer!`
+    : "Thank you for being a loyal customer!";
 
   await sendCustomerEmail(
     params.email,
     `Your Biggystone gift code — ${params.giftName}`,
     `<p>Hi ${params.customerName},</p>
-     <p>Thank you for being a loyal customer! You picked <strong>${params.giftName}</strong> —
+     <p>${milestoneLine} You've earned <strong>${params.giftName}</strong> —
      that's ${rewardLine}.</p>
      <p>Your one-time code: <strong style="font-size:18px;letter-spacing:1px;">${params.code}</strong></p>
      <p>Enter this code at checkout (discount code field) whenever you're ready to use it.</p>

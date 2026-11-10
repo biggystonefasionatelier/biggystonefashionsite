@@ -15,7 +15,7 @@ type Gift = {
   voucher_transferable?: boolean;
 };
 
-function GiftRow({ gift, onSaved }: { gift: Gift; onSaved: (gift: Gift) => void }) {
+function GiftForm({ gift, onSaved }: { gift: Gift; onSaved: (gift: Gift) => void }) {
   const [name, setName] = useState(gift.name);
   const [description, setDescription] = useState(gift.description);
   const [imageUrl, setImageUrl] = useState(gift.image_url ?? "");
@@ -24,10 +24,12 @@ function GiftRow({ gift, onSaved }: { gift: Gift; onSaved: (gift: Gift) => void 
   const [voucherTransferable, setVoucherTransferable] = useState(gift.voucher_transferable ?? false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [saved, setSaved] = useState(false);
 
   async function handleSave() {
     setSaving(true);
     setError("");
+    setSaved(false);
 
     try {
       const res = await fetch(`/api/admin/gifts/${gift.number}`, {
@@ -51,6 +53,7 @@ function GiftRow({ gift, onSaved }: { gift: Gift; onSaved: (gift: Gift) => void 
       }
 
       onSaved(data.gift);
+      setSaved(true);
     } catch {
       setError("Network error. Try again.");
     } finally {
@@ -60,8 +63,7 @@ function GiftRow({ gift, onSaved }: { gift: Gift; onSaved: (gift: Gift) => void 
 
   return (
     <div className="rounded-xl border border-black/10 bg-white p-4">
-      <p className="text-xs font-semibold text-neutral-500">Gift #{gift.number}</p>
-      <div className="mt-2 grid gap-2 sm:grid-cols-2">
+      <div className="grid gap-2 sm:grid-cols-2">
         <div>
           <label className="text-xs text-neutral-500">Name</label>
           <input
@@ -91,9 +93,7 @@ function GiftRow({ gift, onSaved }: { gift: Gift; onSaved: (gift: Gift) => void 
       </div>
       <div className="mt-3 grid gap-2 sm:grid-cols-2">
         <div>
-          <label className="text-xs text-neutral-500">
-            What happens when someone wins this
-          </label>
+          <label className="text-xs text-neutral-500">What happens when a customer earns this</label>
           <select
             value={voucherType}
             onChange={(e) => setVoucherType(e.target.value as VoucherType)}
@@ -111,7 +111,7 @@ function GiftRow({ gift, onSaved }: { gift: Gift; onSaved: (gift: Gift) => void 
               type="number"
               value={voucherAmount}
               onChange={(e) => setVoucherAmount(e.target.value)}
-              placeholder="5000"
+              placeholder="10000"
               className="mt-1 w-full rounded-md border border-black/15 px-3 py-2 text-sm"
             />
           </div>
@@ -120,9 +120,10 @@ function GiftRow({ gift, onSaved }: { gift: Gift; onSaved: (gift: Gift) => void 
       {voucherType !== "none" && (
         <>
           <p className="mt-2 text-xs text-neutral-500">
-            The customer gets a one-time code right after they pick this
-            number (shown on screen and emailed to them), for use at checkout
-            on a future order. This order itself isn&apos;t affected.
+            The customer gets a one-time code automatically the moment they
+            qualify (shown on screen and emailed to them), for use at
+            checkout on a future order. The order that earned it isn&apos;t
+            affected.
           </p>
           <label className="mt-2 flex items-center gap-2 text-xs text-neutral-600">
             <input
@@ -130,8 +131,9 @@ function GiftRow({ gift, onSaved }: { gift: Gift; onSaved: (gift: Gift) => void 
               checked={voucherTransferable}
               onChange={(e) => setVoucherTransferable(e.target.checked)}
             />
-            Shareable — anyone with the code can use it, not just the winner
-            (e.g. a gift card meant to be given to a friend)
+            Shareable — anyone with the code can use it, not just the
+            customer who earned it (e.g. a gift card meant to be given to a
+            friend)
           </label>
         </>
       )}
@@ -144,6 +146,7 @@ function GiftRow({ gift, onSaved }: { gift: Gift; onSaved: (gift: Gift) => void 
         >
           {saving ? "Saving..." : "Save"}
         </button>
+        {saved && <p className="text-xs text-green-700">Saved.</p>}
         {error && <p className="text-xs text-red-600">{error}</p>}
       </div>
     </div>
@@ -151,34 +154,35 @@ function GiftRow({ gift, onSaved }: { gift: Gift; onSaved: (gift: Gift) => void 
 }
 
 export default function AdminGiftsPage() {
-  const [gifts, setGifts] = useState<Gift[] | null>(null);
+  const [gift, setGift] = useState<Gift | null | undefined>(undefined);
 
   useEffect(() => {
     fetch("/api/admin/gifts")
       .then((r) => r.json())
-      .then((data) => setGifts(data.gifts ?? []));
+      .then((data) => {
+        const gifts: Gift[] = data.gifts ?? [];
+        setGift(gifts.find((g) => g.number === 1) ?? null);
+      });
   }, []);
-
-  function handleSaved(updated: Gift) {
-    setGifts((prev) => (prev ? prev.map((g) => (g.number === updated.number ? updated : g)) : prev));
-  }
 
   return (
     <div>
-      <h1 className="text-2xl font-bold">Loyalty gifts</h1>
+      <h1 className="text-2xl font-bold">Loyalty gift</h1>
       <p className="mt-2 max-w-2xl text-sm text-neutral-500">
-        Customers who pay for 5 retail orders of ₦20,000 or more (then again at 10, 15, and so
-        on) get a popup after checkout letting them pick a number 1–10. They never see these
-        names until after they pick — set what each number actually is here.
+        Customers who pay for 5 retail orders of ₦20,000 or more (then again
+        at 10, 15, and so on) automatically earn this gift right away — no
+        picking involved. Set what it actually is here.
       </p>
 
-      {!gifts ? (
+      {gift === undefined ? (
         <p className="mt-6 text-sm text-neutral-500">Loading...</p>
+      ) : gift === null ? (
+        <p className="mt-6 text-sm text-neutral-500">
+          Gift isn&apos;t set up yet — contact support.
+        </p>
       ) : (
-        <div className="mt-6 space-y-4">
-          {gifts.map((gift) => (
-            <GiftRow key={gift.id} gift={gift} onSaved={handleSaved} />
-          ))}
+        <div className="mt-6">
+          <GiftForm gift={gift} onSaved={setGift} />
         </div>
       )}
     </div>

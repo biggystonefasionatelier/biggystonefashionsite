@@ -90,7 +90,14 @@ export async function GET(request: Request) {
       }
     }
 
-    await markGiftEligibilityIfQualifying(db, order._id, order.email, order.order_type, order.total);
+    await markGiftEligibilityIfQualifying(
+      db,
+      order._id,
+      order.email,
+      order.customer_name,
+      order.order_type,
+      order.total
+    );
 
     if (order.discount_code === BIRTHDAY_DISCOUNT_CODE) {
       await markBirthdayDiscountUsed(db, order.email);

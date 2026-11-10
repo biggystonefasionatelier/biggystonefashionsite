@@ -27,6 +27,7 @@ export type Order = {
   order_items: OrderItem[];
   gift_number?: number;
   gift_name?: string;
+  gift_order_number?: number;
   discount_code?: string | null;
   discount_amount?: number | null;
   bundle_discount_amount?: number | null;
@@ -259,7 +260,8 @@ export default function OrderCard({
 
       {o.gift_number && (
         <p className="mt-2 border-t border-black/5 pt-2 text-xs font-medium text-brand-black">
-          🎁 Loyalty gift picked: #{o.gift_number} — {o.gift_name}
+          🎁 Loyalty gift earned{o.gift_order_number ? ` (${o.gift_order_number}th qualifying order)` : ""} —{" "}
+          {o.gift_name}
         </p>
       )}
     </div>

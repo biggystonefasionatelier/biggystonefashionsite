@@ -3,6 +3,7 @@ import { ObjectId } from "mongodb";
 import { z } from "zod";
 import { getDb } from "@/lib/mongodb";
 import { sendPurchaseConversionEvent } from "@/lib/metaConversions";
+import { markGiftEligibilityIfQualifying } from "@/lib/loyalty";
 
 const updateSchema = z
   .object({
@@ -25,6 +26,7 @@ type OrderDoc = {
   sourced_items?: string[];
   email: string;
   phone: string;
+  customer_name: string;
   total: number;
   paystack_reference?: string;
 };
@@ -103,6 +105,18 @@ export async function PATCH(
         total: before.total,
         eventId: before.paystack_reference ?? id,
       });
+
+      // Same loyalty-milestone check the automatic Paystack paths run -
+      // a manual reconciliation is a real paid order too, and it should
+      // still count toward (and be able to trigger) the 5th-order gift.
+      await markGiftEligibilityIfQualifying(
+        db,
+        before._id,
+        before.email,
+        before.customer_name,
+        before.order_type,
+        before.total
+      );
     }
 
     const { _id, ...rest } = result;

@@ -4,17 +4,18 @@ import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useCart } from "@/components/CartContext";
-import GiftPicker from "@/components/GiftPicker";
 import { trackPurchase } from "@/lib/analytics";
 
 type VerifyState = "checking" | "paid" | "failed" | "error";
+
+type GiftInfo = { name: string; code: string | null; orderNumber: number | null };
 
 function SuccessContent() {
   const params = useSearchParams();
   const reference = params.get("reference") ?? params.get("trxref");
   const { clear } = useCart();
   const [state, setState] = useState<VerifyState>(reference ? "checking" : "error");
-  const [showGiftPicker, setShowGiftPicker] = useState(false);
+  const [gift, setGift] = useState<GiftInfo | null>(null);
 
   useEffect(() => {
     if (!reference) return;
@@ -35,8 +36,12 @@ function SuccessContent() {
             sessionStorage.setItem(trackedKey, "1");
           }
 
-          if (data.order?.gift_eligible && !data.order?.gift_number) {
-            setShowGiftPicker(true);
+          if (data.order?.gift_number) {
+            setGift({
+              name: data.order.gift_name,
+              code: data.order.gift_voucher_code ?? null,
+              orderNumber: data.order.gift_order_number ?? null,
+            });
           }
         } else {
           setState("failed");
@@ -57,6 +62,31 @@ function SuccessContent() {
             A confirmation has been sent to your email. We&apos;ll reach out
             with delivery details shortly.
           </p>
+          {gift && (
+            <div className="mt-6 rounded-xl border border-brand-gold/60 bg-brand-gold/10 p-5 text-left">
+              <p className="text-sm font-bold">
+                🎉 {gift.orderNumber ? `Your ${gift.orderNumber}th qualifying order` : "Loyalty milestone"}{" "}
+                earned you a gift!
+              </p>
+              <p className="mt-1 text-sm">{gift.name}</p>
+              {gift.code ? (
+                <>
+                  <p className="mt-3 text-xs text-neutral-600">
+                    Your one-time code — enter this at checkout on a future order:
+                  </p>
+                  <p className="mt-1 text-lg font-bold tracking-wide">{gift.code}</p>
+                  <p className="mt-1 text-xs text-neutral-500">
+                    We&apos;ve also emailed this to you so it isn&apos;t lost.
+                  </p>
+                </>
+              ) : (
+                <p className="mt-3 text-xs text-neutral-500">
+                  This will be included with your order. Thank you for being a loyal customer!
+                </p>
+              )}
+            </div>
+          )}
+
           <Link href="/shop" className="mt-6 inline-block underline">
             Keep shopping →
           </Link>
@@ -83,8 +113,6 @@ function SuccessContent() {
           </p>
         </>
       )}
-
-      {showGiftPicker && reference && <GiftPicker reference={reference} />}
     </div>
   );
 }
