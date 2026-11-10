@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { WHATSAPP_NUMBER, OPAY_ACCOUNT_NAME, OPAY_ACCOUNT_NUMBER } from "@/lib/contact";
+import { formatOrderNumber } from "@/lib/formatOrderNumber";
 
 type InvoiceItem = { product_name: string; quantity: number; unit_price: number };
 type InvoiceOrder = {
@@ -137,7 +138,7 @@ export default function InvoicePage() {
     <div className="mx-auto max-w-xl px-4 py-16">
       <h1 className="text-2xl font-bold">Payment request from {order.customer_name}</h1>
       {order.order_number && (
-        <p className="mt-1 text-xs text-neutral-500">Order #{order.order_number}</p>
+        <p className="mt-1 text-xs text-neutral-500">Order {formatOrderNumber(order.order_number)}</p>
       )}
       <p className="mt-2 text-sm text-neutral-600">
         {order.customer_name} picked out some pieces from Biggystone Fashion

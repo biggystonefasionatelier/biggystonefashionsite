@@ -24,3 +24,5 @@ export async function getNextOrderNumber(db: Db): Promise<number> {
   );
   return result!.value;
 }
+
+export { formatOrderNumber } from "@/lib/formatOrderNumber";

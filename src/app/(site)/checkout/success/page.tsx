@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useCart } from "@/components/CartContext";
 import { trackPurchase } from "@/lib/analytics";
+import { formatOrderNumber } from "@/lib/formatOrderNumber";
 
 type VerifyState = "checking" | "paid" | "failed" | "error";
 
@@ -60,7 +61,9 @@ function SuccessContent() {
       {state === "paid" && (
         <>
           <h1 className="text-2xl font-bold">Thank you — your order is confirmed</h1>
-          {orderNumber && <p className="mt-1 text-xs text-neutral-500">Order #{orderNumber}</p>}
+          {orderNumber && (
+            <p className="mt-1 text-xs text-neutral-500">Order {formatOrderNumber(orderNumber)}</p>
+          )}
           <p className="mt-3 text-sm text-neutral-600">
             A confirmation has been sent to your email. We&apos;ll reach out
             with delivery details shortly.
