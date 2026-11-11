@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { getProducts } from "@/lib/products";
 import ShopBrowser from "@/components/ShopBrowser";
 import { BUNDLE_MIN_PRICE, BUNDLE_DISCOUNT_PER_GROUP } from "@/lib/bundleDiscount";
@@ -32,7 +33,9 @@ export default async function ShopPage() {
           Instagram for the first look.
         </p>
       ) : (
-        <ShopBrowser products={products} />
+        <Suspense fallback={null}>
+          <ShopBrowser products={products} />
+        </Suspense>
       )}
     </div>
   );
